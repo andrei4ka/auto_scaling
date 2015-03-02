@@ -1,0 +1,43 @@
+#!/bin/bash
+#config
+#Configuration section
+
+ASTUTE_YAML="/etc/fuel/astute.yaml"
+CHECK_RETRIES=60
+
+#Binaries
+GSC="/usr/bin/python /usr/bin/get_service_credentials.py"
+GIT="/usr/bin/git"
+SSH="/usr/bin/ssh"
+SCP="/usr/bin/scp"
+PYT="/usr/bin/python"
+YUM="/usr/bin/yum -y"
+RM="/bin/rm -rf"
+MV="/bin/mv"
+SCR="/usr/bin/screen"
+MAKE="/usr/bin/make"
+AWK="/usr/bin/awk"
+HEAD="/usr/bin/head"
+MKDIR="/bin/mkdir -p"
+CP="/bin/cp -R"
+SCTL="/usr/bin/supervisorctl"
+GEM="/usr/bin/gem"
+FUEL="/usr/bin/fuel"
+KILLALL="/usr/bin/killall"
+GRUNT=/usr/bin/grunt
+NPM=/usr/bin/npm
+RSYNC=/usr/bin/rsync
+
+#Colors an appearence
+RED="echo -en \\033[1;31m"
+GREEN="echo -en \\033[1;32m"
+RESET="echo -en \\033[0;39m"
+YELLOW="echo -en \\e[0;93m"
+BOLD=$(tput bold)
+export COLUMNS=$(tput cols)
+TOEND=$(tput hpa ${COLUMNS})$(tput cub 6)
+
+declare -a data=(`$FUEL node 2>/dev/null 2>&1 | grep -v ready | grep -v provisioned | grep None | grep -v deploying | grep -v "("  | grep -v ")"  | grep -v "Untitled" | grep "discover" | awk '{print $1,$5,$9,$11,$15}'`)
+
+data_count=${#data[*]}
+let "nodes_count = $data_count / 5"

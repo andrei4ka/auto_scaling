@@ -1,0 +1,196 @@
+#!/bin/bash
+
+if ${DEBUG}; then
+  DOCKER="123 -D"
+else
+  DOCKER="123"
+fi
+
+function show_usage {
+  echo "Usage:"
+  echo "  $0 command"
+  echo
+  echo "Available commands: (Note: work in progress)"
+  echo "help: show this message"
+  echo "	Defaults 1: Ceph and compute nedes have the same HW configuration."
+  echo "	Defaults 2: Nodes Prebootstrapped and turned off, waiting for WOL packet."
+  echo "	Defaults 3: Nodes are renamed, and have no spaces in names. This is URGENT!!!"
+  echo "	Defaults 4: to be added..."
+  echo "Steps:"
+  echo "	Step 1: Collect infromation about the nodes."
+  echo "	Step 2: Create pool of hash for storage and compute nodes."
+  echo "	Step 3: Send magick packet (WOL) for actual node."
+  echo "	Step 4: Monitor that the node is online and ready to deploy."
+  echo "	Step 5: Add nodes to cluster ID."
+  echo "	Step 6: Configure the node. Patch the YAML.(mac, ip)"
+  echo "	Step 7: Upload configuration back to FUEL."
+  echo "	Step 8: Deploy compute/ceph node."
+  echo "Commands:"
+  echo "	boot compute: bootstrap one compute node"
+  echo "	boot storage: bootstrap one storage node"
+  echo "	stop compute: bootstrap one compute node"
+  echo "	stop storage: bootstrap one storage node"
+  echo "	deploy compute: deploy one compute node"
+  echo "	deploy storage: deploy one storage node"
+  echo "	remove node: remove node-id from fuel database, U still need to remove tails from cobbler;"
+
+}
+
+function parse_options {
+  opts="$@"
+  for opt in $@; do
+    case $opt in
+      -V|--version) VERSION=$2
+                    shift 2
+                    ;;
+      -d|--debug)   DEBUG=true
+                    shift
+                    ;;
+      --nodebug)    DEBUG=false
+                    shift
+                    ;;
+      --)           shift
+                    nonopts+=("$@")
+                    return
+                    ;;
+      help|boot|deploy|start|stop|remove)
+                    nonopts+=("$@")
+                    return
+                    ;;
+      -*)           echo "Unrecognized option: $opt" 1>&2
+                    exit 1
+                    ;;
+      *)            nonopts+=("$opt")
+                    ;;
+    esac
+  done
+}
+
+function list_nodes {
+
+  data_count=${#data[*]}
+  let "nodes_count = $data_count / 5"
+
+  printf "%-13s%-25s%-13s%-25s%-25s\n" "ID" "NAME" "Admin IP" "MAC" "ONLINE"
+  while [[ "$nodes" != "$nodes_count" ]];
+    do
+     # echo ${data[@]:$offset:5}
+      printf "%-13s%-25s%-13s%-25s%-25s\n" "${data[@]:$offset:1}" "${data[@]:$offset + 1:1}" "${data[@]:$offset + 2:1}" "${data[@]:$offset + 3:1}" "${data[@]:$offset +4 :1}"
+
+      #echo ${nodes_data[@]}
+      let "nodes += 1"
+      let "offset += 5"
+    done
+}
+
+function node_data {
+  offset=1
+  re='^[0-9]+$'
+  
+    if [[ "$1" == '' ]]; then
+     ${GREEN}
+     echo "usage: $0 node 0 1 2 4" >&2; 
+     ${RESET}
+     exit 0
+    fi
+  printf "%-13s%-25s%-13s%-25s%-25s\n" "ID" "NAME" "Admin IP" "MAC" "ONLINE"
+    for nodes in $@; do
+     if ! [[ $nodes =~ $re ]] ; then
+      ${RED}
+      echo "error: Not a number, should be in range [0..]" >&2;
+      ${RESET}
+      exit 1
+     else
+      let "offset= $nodes * 5"
+      printf "%-13s%-25s%-13s%-25s%-25s\n" "${data[@]:$offset:1}" "${data[@]:$offset + 1:1}" "${data[@]:$offset + 2:1}" "${data[@]:$offset + 3:1}" "${data[@]:$offset +4 :1}"
+     fi
+    done
+
+node_count
+
+}
+
+function boot {
+  update_credentials
+  offset=1
+  re='^[0-9]+$'
+
+    if [[ "$1" == '' ]]; then
+      ${GREEN}
+      echo "usage: $0 boot 0 1 2 4 or $0 boot first - to boot first spare node" >&2; 
+      ${RESET}
+      exit 0
+    fi
+
+    for nodes in $@; do
+      if ! [[ $nodes =~ $re ]] ; then
+       ${RED}
+       echo "error: Not a number, should be in range [0..]" >&2;
+       ${RESET}
+       exit 1
+     else
+       let "offset= $nodes * 5"
+       node_mac=${data[@]:$offset + 3:1}
+       node_ip=${data[@]:$offset + 2:1}
+
+       echo "Sending wol packet to node with mac:" $node_mac
+       ether-wake -i ${ADMIN_NETWORK_interface} $node_mac
+       check_ready node $node_ip
+     fi
+    done
+
+
+#node_count
+
+}
+
+function node_count {
+  ${GREEN}
+  echo "Total count of spare nodes:" $nodes_count
+  ${RESET}
+}
+
+function update_credentials {
+  credentialfile=$(mktemp /tmp/servicepws.XXXXX)
+  $GSC $ASTUTE_YAML > $credentialfile
+  . $credentialfile
+  rm -f $credentialfile
+}
+
+
+function retry_checker {
+  tries=0
+  echo "checking with command \"$*\""
+  until eval $*; do
+     rc=$?
+     ((tries++))
+     echo "try number $tries"
+     echo "return code is $rc"
+     if [ $tries -gt $CHECK_RETRIES ]; then
+        failure=1
+     break
+  fi
+     sleep 1
+  done
+}
+
+
+function check_ready {
+  #Uses a custom command to ensure a container is ready
+  update_credentials
+  failure=0
+  echo "checking container $1"
+  case $1 in
+      node) retry_checker "ping -c 1 $2 | grep ttl" ;;
+      *) echo "No defined test for determining if $1 is ready.";;
+  esac
+
+  if [ $failure -eq 1 ]; then
+    echo "ERROR: $1 failed to start."
+    return 1
+  else
+    echo "$1 is ready."
+    return 0
+  fi
+}
+
