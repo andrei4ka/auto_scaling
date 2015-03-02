@@ -67,16 +67,14 @@ function parse_options {
 }
 
 function list_nodes {
-
   data_count=${#data[*]}
   let "nodes_count = $data_count / 5"
 
   printf "%-13s%-25s%-13s%-25s%-25s\n" "ID" "NAME" "Admin IP" "MAC" "ONLINE"
   while [[ "$nodes" != "$nodes_count" ]];
     do
-     # echo ${data[@]:$offset:5}
+      #echo ${data[@]:$offset:5}
       printf "%-13s%-25s%-13s%-25s%-25s\n" "${data[@]:$offset:1}" "${data[@]:$offset + 1:1}" "${data[@]:$offset + 2:1}" "${data[@]:$offset + 3:1}" "${data[@]:$offset +4 :1}"
-
       #echo ${nodes_data[@]}
       let "nodes += 1"
       let "offset += 5"
@@ -86,35 +84,31 @@ function list_nodes {
 function node_data {
   offset=1
   re='^[0-9]+$'
-  
     if [[ "$1" == '' ]]; then
-     ${GREEN}
-     echo "usage: $0 node 0 1 2 4" >&2; 
-     ${RESET}
-     exit 0
+      ${GREEN}
+      echo "usage: $0 node 0 1 2 4" >&2; 
+      ${RESET}
+      exit 0
     fi
   printf "%-13s%-25s%-13s%-25s%-25s\n" "ID" "NAME" "Admin IP" "MAC" "ONLINE"
     for nodes in $@; do
-     if ! [[ $nodes =~ $re ]] ; then
-      ${RED}
-      echo "error: Not a number, should be in range [0..]" >&2;
-      ${RESET}
-      exit 1
-     else
-      let "offset= $nodes * 5"
-      printf "%-13s%-25s%-13s%-25s%-25s\n" "${data[@]:$offset:1}" "${data[@]:$offset + 1:1}" "${data[@]:$offset + 2:1}" "${data[@]:$offset + 3:1}" "${data[@]:$offset +4 :1}"
-     fi
+      if ! [[ $nodes =~ $re ]] ; then
+        ${RED}
+        echo "error: Not a number, should be in range [0..]" >&2;
+        ${RESET}
+        exit 1
+      else
+        let "offset= $nodes * 5"
+        printf "%-13s%-25s%-13s%-25s%-25s\n" "${data[@]:$offset:1}" "${data[@]:$offset + 1:1}" "${data[@]:$offset + 2:1}" "${data[@]:$offset + 3:1}" "${data[@]:$offset +4 :1}"
+      fi
     done
-
-node_count
-
+  node_count
 }
 
 function boot {
   update_credentials
   offset=1
   re='^[0-9]+$'
-
     if [[ "$1" == '' ]]; then
       ${GREEN}
       echo "usage: $0 boot 0 1 2 4 or $0 boot first - to boot first spare node" >&2; 
@@ -124,22 +118,19 @@ function boot {
 
     for nodes in $@; do
       if ! [[ $nodes =~ $re ]] ; then
-       ${RED}
-       echo "error: Not a number, should be in range [0..]" >&2;
-       ${RESET}
-       exit 1
+        ${RED}
+        echo "error: Not a number, should be in range [0..]" >&2;
+        ${RESET}
+        exit 1
      else
-       let "offset= $nodes * 5"
-       node_mac=${data[@]:$offset + 3:1}
-       node_ip=${data[@]:$offset + 2:1}
-
-       echo "Sending wol packet to node with mac:" $node_mac
-       ether-wake -i ${ADMIN_NETWORK_interface} $node_mac
-       check_ready node $node_ip
+        let "offset= $nodes * 5"
+        node_mac=${data[@]:$offset + 3:1}
+        node_ip=${data[@]:$offset + 2:1}
+        echo "Sending wol packet to node with mac:" $node_mac
+        ether-wake -i ${ADMIN_NETWORK_interface} $node_mac
+        check_ready node $node_ip
      fi
     done
-
-
 #node_count
 
 }
@@ -162,15 +153,15 @@ function retry_checker {
   tries=0
   echo "checking with command \"$*\""
   until eval $*; do
-     rc=$?
-     ((tries++))
-     echo "try number $tries"
-     echo "return code is $rc"
-     if [ $tries -gt $CHECK_RETRIES ]; then
-        failure=1
-     break
+    rc=$?
+    ((tries++))
+    echo "try number $tries"
+    echo "return code is $rc"
+    if [ $tries -gt $CHECK_RETRIES ]; then
+      failure=1
+    break
   fi
-     sleep 1
+    sleep 1
   done
 }
 
@@ -179,7 +170,7 @@ function check_ready {
   #Uses a custom command to ensure a container is ready
   update_credentials
   failure=0
-  echo "checking container $1"
+  echo "checking that node or service is available: $1 $2"
   case $1 in
       node) retry_checker "ping -c 1 $2 | grep ttl" ;;
       *) echo "No defined test for determining if $1 is ready.";;
