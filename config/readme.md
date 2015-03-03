@@ -5,14 +5,12 @@ This script allows to map node interfaces or interface's mac adresses on cluster
 ##Usage
 
 You should perform this script with several named parameters:
+
 1. fuel ip address with option '-i', for example : -i 172.18.64.22
 2. fuel node id with option '-n', for example : -n 22
-3. interface or interface's mac address for public network with option '-p',
-for example : -p eth1 or -p 52:54:62:A4:T6:12
-4. interface or interface's mac address for management network with option '-m',
-for example : -m eth2 or -m 52:54:00:A4:AA:12
-5. interface or interface's mac address for storage network with option '-s',
-for example : -s eth3 or -s 52:BB:CC:00:00:00
+3. interface or interface's mac address for public network with option '-p', for example : -p eth1 or -p 52:54:62:A4:T6:12
+4. interface or interface's mac address for management network with option '-m', for example : -m eth2 or -m 52:54:00:A4:AA:12
+5. interface or interface's mac address for storage network with option '-s', for example : -s eth3 or -s 52:BB:CC:00:00:00
 6. type of mapping with option -f . Now, script supports two types of mapping : interface's name(argument name - 'name') and interface's mac (argument name - 'mac').
 
 ###Examples
