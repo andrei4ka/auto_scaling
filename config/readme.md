@@ -1,6 +1,6 @@
 #Manage_eth_by_roles
 
-This script allows to map node interfaces or interface's mac adresses on cluster network roles(set eth1 node interface in role 'management', etc.). This script is included in jenkins jobs "ecm-deploy-compute-cic", and it's one of the first actions of this job.
+This script allows to map node interfaces or interface's mac adresses on cluster network roles(set eth1 node interface in role 'management', etc.). 
 
 ##Usage
 
@@ -45,4 +45,3 @@ If you don't set this option, it's will be set automatically with 'active-backup
 
 ###WARNING
 admin-pass, admin-tenant and admin-username options are mandatory now! don't forget!
-
