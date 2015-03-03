@@ -37,9 +37,9 @@ For example mac:
 
 Also you can set bond type options. Now, fuel support three types of it:
 
-*active-backup
-*balance-slb
-*lacp-balance-tcp
+* active-backup
+* balance-slb
+* lacp-balance-tcp
 
 If you don't set this option, it's will be set automatically with 'active-backup' option.
 
