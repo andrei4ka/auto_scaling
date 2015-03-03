@@ -3,7 +3,7 @@
 #Configuration section
 
 ASTUTE_YAML="/etc/fuel/astute.yaml"
-CHECK_RETRIES=60
+CHECK_RETRIES=180
 
 #Binaries
 GSC="/usr/bin/python /usr/bin/get_service_credentials.py"
