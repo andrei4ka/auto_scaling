@@ -2,7 +2,23 @@
 #config
 #Configuration section
 
+#interfaces configuration
+adminif="eth0"
+mgmtif="eth1+eth2"
+publicif="eth1+eth2"
+privateif="eth1+eth2"
+storageif="eth1+eth2"
+
+assigntipe="name"
+
+mgmtbondmode="active-backup"
+publicbondmode="active-backup"
+privatebondmode="active-backup"
+storagebondmode="active-backup"
+
+#Additional files
 ASTUTE_YAML="/etc/fuel/astute.yaml"
+NTA="config/nodes_to_add"
 CHECK_RETRIES=180
 
 #Binaries
@@ -37,7 +53,9 @@ BOLD=$(tput bold)
 export COLUMNS=$(tput cols)
 TOEND=$(tput hpa ${COLUMNS})$(tput cub 6)
 
-declare -a data=(`$FUEL node 2>/dev/null 2>&1 | grep -v ready | grep -v provisioned | grep None | grep -v deploying | grep -v "("  | grep -v ")"  | grep -v "Untitled" | grep "discover" | awk '{print $1,$5,$9,$11,$15}'`)
+#declare -a data=(`$FUEL node 2>/dev/null 2>&1 | grep -v ready | grep -v provisioned | grep None | grep -v deploying | grep -v "("  | grep -v ")"  | grep -v "Untitled" | grep "discover" | awk '{print $1,$5,$9,$11,$15}'`)
 
+declare -a data=(`cat $NTA | grep -v ^#`)
 data_count=${#data[*]}
-let "nodes_count = $data_count / 5"
+let "nodes_count = $data_count / 2"  #cat nodes_to_add | grep -v ^# | wc -l
+

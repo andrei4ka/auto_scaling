@@ -17,8 +17,8 @@ function show_usage {
   echo "	Defaults 3: Nodes are renamed, and have no spaces in names. This is URGENT!!!"
   echo "	Defaults 4: to be added..."
   echo "Steps:"
-  echo "	Step 1: Collect infromation about the nodes."
-  echo "	Step 2: Create pool of hash for storage and compute nodes."
+  echo "	Step 1: Collect infromation about the nodes to add(from the file)"
+  echo "	Step 2: Create array  for storage and compute nodes."
   echo "	Step 3: Send magick packet (WOL) for actual node."
   echo "	Step 4: Monitor that the node is online and ready to deploy."
   echo "	Step 5: Add nodes to cluster ID."
@@ -66,44 +66,78 @@ function parse_options {
   done
 }
 
-function list_nodes {
-  data_count=${#data[*]}
-  let "nodes_count = $data_count / 5"
 
-  printf "%-13s%-25s%-13s%-25s%-25s\n" "ID" "NAME" "Admin IP" "MAC" "ONLINE"
-  while [[ "$nodes" != "$nodes_count" ]];
+function list_nodes {
+  columnname=("ADMIN MAC" "NAME")
+  offset=0
+  for ((nodes=0;nodes<nodes_count;nodes++))
     do
-      #echo ${data[@]:$offset:5}
-      printf "%-13s%-25s%-13s%-25s%-25s\n" "${data[@]:$offset:1}" "${data[@]:$offset + 1:1}" "${data[@]:$offset + 2:1}" "${data[@]:$offset + 3:1}" "${data[@]:$offset +4 :1}"
-      #echo ${nodes_data[@]}
-      let "nodes += 1"
-      let "offset += 5"
+      for((i=0;i<2;i++))
+      do
+          echo ${columnname[$i]} $'\x1d' "${data[ (( $i + $offset )) ]}"
+      done | column -t -s$'\x1d'
+      (( offset += 2 ))
     done
 }
 
 function node_data {
-  offset=1
-  re='^[0-9]+$'
+
+  re='^[1-9]+$'
     if [[ "$1" == '' ]]; then
       ${GREEN}
-      echo "usage: $0 node 0 1 2 4" >&2; 
+      echo "usage: $0 node 1 2 4" >&2; 
       ${RESET}
       exit 0
     fi
-  printf "%-13s%-25s%-13s%-25s%-25s\n" "ID" "NAME" "Admin IP" "MAC" "ONLINE"
     for nodes in $@; do
       if ! [[ $nodes =~ $re ]] ; then
         ${RED}
-        echo "error: Not a number, should be in range [0..]" >&2;
+        echo "error: Not a number, should be in range [1..$nodes_count]" >&2;
+        ${RESET}
+        exit 1
+      elif
+          [[ $nodes > $nodes_count ]] ; then 
+          ${RED}
+          echo "ID of node out of range [1.."$nodes_count"] please check the file node_to_add"
+          ${RESET}
+      else
+         columnname=("MAC" "NAME")
+         for((i=0;i<2;i++))
+          do
+          echo ${columnname[$i]} $'\x1d' "${data[ (( (( $nodes - 1 )) * 2 + $i )) ]}"
+          done | column -t -s$'\x1d'
+      fi
+    done
+#  node_count
+}
+
+
+
+function get_node_id {
+  re='^[1-9]+$'
+    if [[ "$1" == '' ]]; then
+      ${GREEN}
+      echo "usage: $0 node 1 2 4" >&2; 
+      ${RESET}
+      exit 0
+    fi
+      if ! [[ $1 =~ $re ]] ; then
+        ${RED}
+        echo "error: Not a number, should be in range [1..$nodes_count]" >&2;
         ${RESET}
         exit 1
       else
-        let "offset= $nodes * 5"
-        printf "%-13s%-25s%-13s%-25s%-25s\n" "${data[@]:$offset:1}" "${data[@]:$offset + 1:1}" "${data[@]:$offset + 2:1}" "${data[@]:$offset + 3:1}" "${data[@]:$offset +4 :1}"
-      fi
-    done
-  node_count
+        (( macid = (( (( $1 - 1 )) * 2 )) ))
+        echo ${data[ $macid ]}
+        #return ${data[ $macid ]}
+     fi
+  check_ready online ${data[ $macid ]}
+
 }
+
+
+
+
 
 function boot {
   update_credentials
@@ -141,6 +175,35 @@ function node_count {
   ${RESET}
 }
 
+
+function check_ready {
+  #Uses a custom command to ensure a container is ready
+  update_credentials
+  failure=0
+  echo "checking that node or service is available: $1 $2"
+  case $1 in
+      node) retry_checker "ping -c 1 $2 | grep ttl" ;;
+      online) retry_checker "fuel node | grep '$2' | grep 'True'" ;;
+      *) echo "No defined test for determining if $1 is ready.";;
+  esac
+
+  if [ $failure -eq 1 ]; then
+    echo "ERROR: $1 failed to start."
+    return 1
+  else
+    echo "$1 is ready."
+    return 0
+  fi
+}
+
+
+
+
+
+
+
+
+
 function update_credentials {
   credentialfile=$(mktemp /tmp/servicepws.XXXXX)
   $GSC $ASTUTE_YAML > $credentialfile
@@ -163,25 +226,5 @@ function retry_checker {
   fi
     sleep 1
   done
-}
-
-
-function check_ready {
-  #Uses a custom command to ensure a container is ready
-  update_credentials
-  failure=0
-  echo "checking that node or service is available: $1 $2"
-  case $1 in
-      node) retry_checker "ping -c 1 $2 | grep ttl" ;;
-      *) echo "No defined test for determining if $1 is ready.";;
-  esac
-
-  if [ $failure -eq 1 ]; then
-    echo "ERROR: $1 failed to start."
-    return 1
-  else
-    echo "$1 is ready."
-    return 0
-  fi
 }
 

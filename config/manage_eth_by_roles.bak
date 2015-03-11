@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -xe
 
 unset node_net_params
 declare -A node_net_params
@@ -13,7 +13,7 @@ bond_template='{"type":"bond","name":"ovs-bondbid","mode":"active-backup","assig
 bond_id=0
 slave_template='{"name": "ethname"}'
 
-OPTS=`getopt -o atuinmpsfxyzkl: --long admin-pass:,admin-tenant:,admin-username:,fuel:,node:,mgmt:,private:,public:,storage:,assign:,mgmtbondmode:,publicbondmode:,privatebondmode:,storagebondmode: -n 'parse-options' -- "$@"`
+OPTS=`getopt -o atuinmpsafxyzwo: --long admin-pass:, admin-tenant:, admin-username:,fuel:,node:,mgmt:,public:,private:,storage:,assign:,mgmtbondmode:,publicbondmode:,privatebondmode:,storagebondmode: -n 'parse-options' -- "$@"`
 if [ $? != 0 ] ; then echo "Failed parsing options." >&2 ; exit 1 ; fi
 
 eval set -- "$OPTS"
@@ -27,21 +27,19 @@ while true; do
     -n | --node ) node_id="$2"; shift; shift;;
     -m | --mgmt ) node_net_params['management']="$2"; shift; shift;;
     -p | --public ) node_net_params['public']="$2"; shift; shift;;
-    -k | --private ) node_net_params['private']="$2"; shift; shift;;
+    -o | --private ) node_net_params['private']="$2"; shift; shift;;
     -s | --storage ) node_net_params['storage']="$2"; shift; shift;;
     -f | --assign ) assign_type="$2"; shift; shift;;
     -x | --mgmtbondmode ) bond_mode_params['management']="$2"; shift; shift;;
     -y | --publicbondmode ) bond_mode_params['public']="$2"; shift; shift;;
-    -l | --privatebondmode ) bond_mode_params['private']="$2"; shift; shift;;
+    -w | --privatebondmode ) bond_mode_params['private']="$2"; shift; shift;;
     -z | --storagebondmode ) bond_mode_params['storage']="$2"; shift; shift;;
     -- ) shift; break ;;
     * ) break ;;
   esac
 done
 
-token_id=$(curl -s 'http://'${fuel_ip}':5000/v2.0/tokens' -X POST -H "Content-Type: application/json" -H "Accept: application/json"  -d '{"auth": {"tenantName": "'$admin_tenant'", "passwordCredentials": {"username": "'$admin_username'", "password": "'$admin_pass'"}}}' | python -c 'import sys, yaml; print yaml.load(sys.stdin)["access"]["token"]["id"]')
-[ -z $token_id ] && echo "Error!Can't get token_id from fuel!" && exit 1
-
+token_id=$(curl -s 'http://"'$fuel_ip'":5000/v2.0/tokens' -X POST -H "Content-Type: application/json" -H "Accept: application/json"  -d '{"auth": {"tenantName": "'"$admin_tenant"'", "passwordCredentials": {"username": "'"$admin_username"'", "password": "'"$admin_pass"'"}}}' | python -c 'import sys, yaml; print yaml.load(sys.stdin)["access"]["token"]["id"]')
 fuel_api_path="http://${fuel_ip}:8000/api"
 curl_data=`curl -s -H "X-Auth-Token: $token_id" -X GET ${fuel_api_path}/nodes/${node_id}/interfaces | jq 'sort_by(.name)' -c`
 
@@ -128,3 +126,4 @@ for netname in ${!bond_mode_params[@]}; do
 done
 
 curl -s -H "X-Auth-Token: $token_id" -X PUT ${fuel_api_path}/nodes/${node_id}/interfaces --data "`echo $curl_data`"
+

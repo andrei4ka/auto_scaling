@@ -56,7 +56,7 @@ elif [ "$1" == "node" ]; then
   node_data "$@"
 elif [ "$1" == "boot" ]; then
   shift 1
-  boot "$@"
+  get_node_id "$1"
 elif [ "$1" == "deploy" ]; then
   shift 2
   deploy $container $@

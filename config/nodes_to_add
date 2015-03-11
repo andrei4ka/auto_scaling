@@ -1,0 +1,6 @@
+## format:admin_mac[space]hostname-to-set 
+## no comments allowed in data lines
+52:54:00:2e:63:58 comp-scal
+52:54:00:2e:63:59 fake1
+52:54:00:2e:63:50 fake2
+52:54:00:2e:63:5F fake3
