@@ -3,18 +3,20 @@
 #Configuration section
 
 #interfaces configuration
-adminif="eth0"
+
 mgmtif="eth1+eth2"
 publicif="eth1+eth2"
 privateif="eth1+eth2"
 storageif="eth1+eth2"
 
-assigntipe="name"
-
 mgmtbondmode="active-backup"
 publicbondmode="active-backup"
 privatebondmode="active-backup"
 storagebondmode="active-backup"
+
+#env configuration
+env_id=1
+role=compute
 
 #Additional files
 ASTUTE_YAML="/etc/fuel/astute.yaml"
@@ -22,7 +24,8 @@ NTA="config/nodes_to_add"
 CHECK_RETRIES=180
 
 #Binaries
-GSC="/usr/bin/python /usr/bin/get_service_credentials.py"
+JQ="config/jq"
+GSC="$PYT /usr/bin/get_service_credentials.py"
 GIT="/usr/bin/git"
 SSH="/usr/bin/ssh"
 SCP="/usr/bin/scp"
@@ -33,16 +36,14 @@ MV="/bin/mv"
 SCR="/usr/bin/screen"
 MAKE="/usr/bin/make"
 AWK="/usr/bin/awk"
+GREP="/bin/grep"
 HEAD="/usr/bin/head"
 MKDIR="/bin/mkdir -p"
 CP="/bin/cp -R"
 SCTL="/usr/bin/supervisorctl"
-GEM="/usr/bin/gem"
 FUEL="/usr/bin/fuel"
 KILLALL="/usr/bin/killall"
-GRUNT=/usr/bin/grunt
-NPM=/usr/bin/npm
-RSYNC=/usr/bin/rsync
+CURL="/usr/bin/curl"
 
 #Colors an appearence
 RED="echo -en \\033[1;31m"

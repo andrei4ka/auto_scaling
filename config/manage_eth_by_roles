@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 unset node_net_params
 declare -A node_net_params
 
@@ -61,7 +62,7 @@ function migrate_admin_net {
     local bond_name=''
     for name in ${!bond_data[@]};do echo $name | grep -q $bond_hash && bond_hash=${name}; done
     set_role_by_param_bond $bond_hash $2
-  else
+ else
     set_role_by_param $bond_hash $2
   fi
 }

@@ -1,6 +1,7 @@
 ## format:admin_mac[space]hostname-to-set 
-## no comments allowed in data lines
-52:54:00:2e:63:58 comp-scal
-52:54:00:2e:63:59 fake1
+## hostname must be valid to check use this: ^(?=.*?[a-z])(?!\.)[a-z\d-]*[a-z\d]$
+## no comments/spaces/returns allowed after this line
+#52:54:00:2e:63:58 compa-utos-cale
+52:54:00:4d:9d:f8 ano-ther-comp
 52:54:00:2e:63:50 fake2
 52:54:00:2e:63:5F fake3
