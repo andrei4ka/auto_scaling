@@ -33,16 +33,7 @@ elif [ "$1" == "boot" ]; then
   wol_and_check "$1"
 elif [ "$1" == "deploy" ]; then
   shift 2
-  deploy $container $@
-elif [ "$1" == "stop" ]; then
-  shift 2
-  stop $container $@
-elif [ "$1" == "remove" ]; then
-  shift 2
-  remove $container $@
-elif [ "$1" == "rename" ]; then
-  shift 2
-  rename $container "$@"
+  deploy $1
 elif [ "$1" == "update_creds" ]; then
   shift 1
   update_credentials

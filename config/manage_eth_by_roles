@@ -44,16 +44,16 @@ token_id=$(curl -s 'http://'${fuel_ip}':5000/v2.0/tokens' -X POST -H "Content-Ty
 [ -z $token_id ] && echo "Error!Can't get token_id from fuel!" && exit 1
 
 fuel_api_path="http://${fuel_ip}:8000/api"
-curl_data=`curl -s -H "X-Auth-Token: $token_id" -X GET ${fuel_api_path}/nodes/${node_id}/interfaces | jq 'sort_by(.name)' -c`
+curl_data=`curl -s -H "X-Auth-Token: $token_id" -X GET ${fuel_api_path}/nodes/${node_id}/interfaces | config/jq 'sort_by(.name)' -c`
 
 function manage_mapping {
   [[ $1 == *+* ]] && set_role_by_param_bond $1 $2 || set_role_by_param $1 $2
 }
 
 function set_role_by_param {
-  local existed_nets=`echo $curl_data | jq ".[] | select(.${assign_type}==\"${1}\").assigned_networks" -c | rev | cut -c 2- | rev | cut -c 2-`
+  local existed_nets=`echo $curl_data | config/jq ".[] | select(.${assign_type}==\"${1}\").assigned_networks" -c | rev | cut -c 2- | rev | cut -c 2-`
   local data=`[[ ! -z $existed_nets ]] && echo $existed_nets,$2 || echo $2`
-  curl_data=`echo $curl_data | jq "map( if .${assign_type} == \"${1}\" then (.assigned_networks=[$data]) else (.) end)"`
+  curl_data=`echo $curl_data | config/jq "map( if .${assign_type} == \"${1}\" then (.assigned_networks=[$data]) else (.) end)"`
 }
 
 function migrate_admin_net {
@@ -70,9 +70,9 @@ function migrate_admin_net {
 function set_role_by_param_bond {
    echo ${!bond_data[@]} | grep -q $1 || add_bond $1
    local bond_name=${bond_data["$1"]}
-   local existed_nets=`echo $curl_data | jq ".[] | select(.name==\"${bond_name}\").assigned_networks" -c | rev | cut -c 2- | rev | cut -c 2-`
+   local existed_nets=`echo $curl_data | config/jq ".[] | select(.name==\"${bond_name}\").assigned_networks" -c | rev | cut -c 2- | rev | cut -c 2-`
    local data=`[[ ! -z $existed_nets ]] && echo $existed_nets,$2 || echo $2`
-   curl_data=`echo $curl_data | jq "map( if .name == \"${bond_name}\" then (.assigned_networks=[$data]) else (.) end)"`
+   curl_data=`echo $curl_data | config/jq "map( if .name == \"${bond_name}\" then (.assigned_networks=[$data]) else (.) end)"`
 }
 
 function add_bond {
@@ -93,30 +93,30 @@ function add_slaves_to_bond {
 
 function add_slave_to_bond {
   local slave=$1
-  [[ $assign_type == 'mac' ]] && slave=`echo $curl_data | jq 'map(select(.mac == "'"$slave"'")) | .[].name' -r`
+  [[ $assign_type == 'mac' ]] && slave=`echo $curl_data | config/jq 'map(select(.mac == "'"$slave"'")) | .[].name' -r`
   local new_slave=`echo $slave_template | sed -e "s/ethname/$slave/"`
-  local existed_slaves=`echo $curl_data | jq ".[] | select(.name==\"${2}\").slaves" -c | rev | cut -c 2- | rev | cut -c 2-`
+  local existed_slaves=`echo $curl_data | config/jq ".[] | select(.name==\"${2}\").slaves" -c | rev | cut -c 2- | rev | cut -c 2-`
   local data=`[[ ! -z $existed_slaves ]] && echo $existed_slaves,$new_slave || echo $new_slave`
-  curl_data=`echo $curl_data | jq "map( if .name == \"${2}\" then (.slaves=[$data]) else (.) end)"`
+  curl_data=`echo $curl_data | config/jq "map( if .name == \"${2}\" then (.slaves=[$data]) else (.) end)"`
 }
 
 #load current net data
 unset net_data
 declare -A net_data
 for netname in ${!node_net_params[@]}; do
-    net_data[$netname]=`echo $curl_data | jq '.[] | select(.assigned_networks[].name=="'"$netname"'").assigned_networks' | jq '.[] | select(.name=="'"$netname"'")' -c`
+    net_data[$netname]=`echo $curl_data | config/jq '.[] | select(.assigned_networks[].name=="'"$netname"'").assigned_networks' | config/jq '.[] | select(.name=="'"$netname"'")' -c`
 done
 
 #get admin interface data
-admin_net_data=`echo $curl_data | jq '.[] | select(.assigned_networks[].name=="fuelweb_admin").assigned_networks' | jq '.[] | select(.name=="fuelweb_admin")' -c`
-admin_if_type=`echo $curl_data | jq ".[] | select(.assigned_networks[].name=="'"fuelweb_admin"'").type" -r`
+admin_net_data=`echo $curl_data | config/jq '.[] | select(.assigned_networks[].name=="fuelweb_admin").assigned_networks' | config/jq '.[] | select(.name=="fuelweb_admin")' -c`
+admin_if_type=`echo $curl_data | config/jq ".[] | select(.assigned_networks[].name=="'"fuelweb_admin"'").type" -r`
 
-[[  $admin_if_type == 'bond'  ]] && admin_if_name=`echo $curl_data | jq '.[] | select(.assigned_networks[].name=="'"fuelweb_admin"'").slaves | sort_by(.name)[0].name' -r` && admin_net_param=`echo $curl_data | jq ".[] | select(.name==\"$admin_if_name\").${assign_type}" -r`  || admin_net_param=`echo $curl_data | jq ".[] | select(.assigned_networks[].name=="'"fuelweb_admin"'").${assign_type}" -r`
+[[  $admin_if_type == 'bond'  ]] && admin_if_name=`echo $curl_data | config/jq '.[] | select(.assigned_networks[].name=="'"fuelweb_admin"'").slaves | sort_by(.name)[0].name' -r` && admin_net_param=`echo $curl_data | config/jq ".[] | select(.name==\"$admin_if_name\").${assign_type}" -r`  || admin_net_param=`echo $curl_data | config/jq ".[] | select(.assigned_networks[].name=="'"fuelweb_admin"'").${assign_type}" -r`
 
 #clear bond
-curl_data=`echo $curl_data | jq 'map(select(.type == "ether"))'`
+curl_data=`echo $curl_data | config/jq 'map(select(.type == "ether"))'`
 #clear all interfaces data
-curl_data=`echo $curl_data | jq 'map(.assigned_networks=[])'`
+curl_data=`echo $curl_data | config/jq 'map(.assigned_networks=[])'`
 
 for netname in ${!node_net_params[@]}; do manage_mapping ${node_net_params[$netname]} ${net_data[$netname]}; done
 
@@ -124,8 +124,8 @@ for netname in ${!node_net_params[@]}; do manage_mapping ${node_net_params[$netn
 migrate_admin_net $admin_net_param $admin_net_data
 
 for netname in ${!bond_mode_params[@]}; do
-  bondname=`echo $curl_data | jq '.[] | select(.assigned_networks[].name == "'"$netname"'").name' -r`
-  curl_data=`echo $curl_data  | jq 'map( if .name == "'"$bondname"'" then (.mode="'"${bond_mode_params[${netname}]}"'") else (.) end)'`
+  bondname=`echo $curl_data | config/jq '.[] | select(.assigned_networks[].name == "'"$netname"'").name' -r`
+  curl_data=`echo $curl_data  | config/jq 'map( if .name == "'"$bondname"'" then (.mode="'"${bond_mode_params[${netname}]}"'") else (.) end)'`
 done
 
 curl -s -H "X-Auth-Token: $token_id" -X PUT ${fuel_api_path}/nodes/${node_id}/interfaces --data "`echo $curl_data`"

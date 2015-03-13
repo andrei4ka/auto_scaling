@@ -58,5 +58,5 @@ TOEND=$(tput hpa ${COLUMNS})$(tput cub 6)
 
 declare -a data=(`cat $NTA | grep -v ^#`)
 data_count=${#data[*]}
-let "nodes_count = $data_count / 2"  #cat nodes_to_add | grep -v ^# | wc -l
+let "nodes_count = $data_count / 3"  #cat nodes_to_add | grep -v ^# | wc -l
 
