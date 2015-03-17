@@ -1,30 +1,69 @@
 #!/bin/bash
-#config
 #Configuration section
-
-#interfaces configuration
-
-mgmtif="eth1+eth2"
-publicif="eth1+eth2"
-privateif="eth1+eth2"
-storageif="eth1+eth2"
-
-mgmtbondmode="active-backup"
-publicbondmode="active-backup"
-privatebondmode="active-backup"
-storagebondmode="active-backup"
 
 #env configuration
 env_id=1
-role=compute
-
-#Additional files
-ASTUTE_YAML="/etc/fuel/astute.yaml"
+#role=compute
+role=ceph-osd
 NTA="config/nodes_to_add"
 CHECK_RETRIES=180
 
+#interfaces configuration for production computes
+#adminif="eth0"
+#mgmtif="eth5+eth7"
+#publicif="eth5+eth7"
+#privateif="eth4+eth6"
+#storageif="eth5+eth7"
+
+#interfaces configuration for production ceph
+#adminif="eth0"
+#mgmtif="eth5+eth7"
+#publicif="eth5+eth7"
+#privateif="eth5+eth7"
+#storageif="eth4+eth6"
+
+mgmtbondmode="lacp-balance-tcp"
+publicbondmode="lacp-balance-tcp"
+privatebondmode="lacp-balance-tcp"
+storagebondmode="lacp-balance-tcp"
+
+
+#configuration for testing
+mgmtif="eth1"
+publicif="eth1"
+privateif="eth1"
+storageif="eth1"
+
+
+#disk configuration for testing
+
+sda="sda=os:0,ceph:7628,cephjournal:0"
+sdb="sdb=os:0,ceph:7628,cephjournal:0"
+vda="vda=os:20000,ceph:30637,cephjournal:0"
+vdb="vdb=os:0,ceph:0,cephjournal:9676"
+
+#disk configuration for producrion
+
+#sda="sda=os:0,ceph:0,cephjournal:456780"
+#sdb="sdb=os:0,ceph:0,cephjournal:456780"
+#sdc="sdc=os:952780,ceph:0,cephjournal:0"
+#sdd="sdd=os:0,ceph:3814883,cephjournal:0"
+#sde="sde=os:0,ceph:3814883,cephjournal:0"
+#sdf="sdf=os:0,ceph:3814883,cephjournal:0"
+#sdg="sdg=os:0,ceph:3814883,cephjournal:0"
+#sdh="sdh=os:0,ceph:3814883,cephjournal:0"
+#sdi="sdi=os:0,ceph:3814883,cephjournal:0"
+#sdj="sdj=os:0,ceph:3814883,cephjournal:0"
+#sdk="sdk=os:0,ceph:3814883,cephjournal:0"
+#sdl="sdl=os:0,ceph:3814883,cephjournal:0"
+#sdm="sdm=os:0,ceph:3814883,cephjournal:0"
+
+
 #Binaries
+ASTUTE_YAML="/etc/fuel/astute.yaml"
 JQ="config/jq"
+MEBR="config/manage_eth_by_roles"
+MDBR="config/manage_disk_by_roles"
 GSC="$PYT /usr/bin/get_service_credentials.py"
 GIT="/usr/bin/git"
 SSH="/usr/bin/ssh"
@@ -54,9 +93,6 @@ BOLD=$(tput bold)
 export COLUMNS=$(tput cols)
 TOEND=$(tput hpa ${COLUMNS})$(tput cub 6)
 
-#declare -a data=(`$FUEL node 2>/dev/null 2>&1 | grep -v ready | grep -v provisioned | grep None | grep -v deploying | grep -v "("  | grep -v ")"  | grep -v "Untitled" | grep "discover" | awk '{print $1,$5,$9,$11,$15}'`)
-
 declare -a data=(`cat $NTA | grep -v ^#`)
 data_count=${#data[*]}
 let "nodes_count = $data_count / 3"  #cat nodes_to_add | grep -v ^# | wc -l
-

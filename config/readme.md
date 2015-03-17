@@ -45,3 +45,29 @@ If you don't set this option, it's will be set automatically with 'active-backup
 
 ###WARNING
 admin-pass, admin-tenant and admin-username options are mandatory now! don't forget!
+
+#Manage_disk_by_roles
+
+
+./mdbr --host=172.16.49.135 3 --disk sda=size:12,os:9,ceph:0,cephjournal:3 vda=os:24576,ceph:77260,cephjournal:0
+
+usage: manage_disk_by_roles [-h] [--login LOGIN] [--password PASSWORD]
+                            [--host HOST] [--port PORT]
+                            [--disk DISK [DISK ...]]
+                            node
+
+Configuration of disks.
+
+positional arguments:
+  node                  ID of node
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --login LOGIN         FUEL login (default: admin).
+  --password PASSWORD   FUEL password (default: admin).
+  --host HOST           FUEL host (default: localhost).
+  --port PORT           FUEL port (default: 8000).
+  --disk DISK [DISK ...]
+                        Disk options that will be passed to Fuel.
+                        Example:
+                            --disk name=os:10,ceph:10,cephjournal:80

@@ -3,7 +3,8 @@
 confdir="config"
 . "$confdir/config"
 . "$confdir/functions"
-#DEBUG=true
+
+DEBUG=false
 
 #Sets var nonopts
 declare -a nonopts
@@ -31,9 +32,9 @@ elif [ "$1" == "info" ]; then
 elif [ "$1" == "boot" ]; then
   shift 1
   wol_and_check "$1"
-elif [ "$1" == "deploy" ]; then
-  shift 2
-  deploy $1
+elif [ "$1" == "disk" ]; then
+  shift 1
+  get_disks "$1"
 elif [ "$1" == "update_creds" ]; then
   shift 1
   update_credentials

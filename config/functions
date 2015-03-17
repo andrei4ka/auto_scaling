@@ -1,109 +1,107 @@
 #!/bin/bash
 
-if ${DEBUG}; then
-  DOCKER="123 -D"
-else
-  DOCKER="123"
-fi
+#if ${DEBUG}; then
+#  set -xe
+#fi
 
 function show_usage {
-  echo "Usage:"
-  echo "  $0 command"
-  echo
-  echo "Available commands: (Note: work in progress)"
-  echo "help: show this message"
-  echo "	Defaults 1: Ceph and compute nodes have to have the same HW configuration."
-  echo "	Defaults 2: Nodes Prebootstrapped and turned off, waiting for WOL packet."
-  echo "	Defaults 3: Nodes are renamed, and have no spaces in names. This is URGENT!!!"
-  echo "	Defaults 4: to be added..."
-  echo "Steps:"
-  echo "	Step 1: Add info to file config/nodes_to_add"
-  echo "	Step 2: Boot up the node, with sendind magic packet(wol)."
-  echo "	Step 3: Check tha node is online"
-  echo "	Step 4: Set hostname from file"
-  echo "	Step 5: Receive id of node my the MAC".
-  echo "	Step 6: Add nodes to cluster ID."
-  echo "	Step 7: Configure node network parameters."
-  echo "	Step 8: Configure node disks parameters."
-  echo "	Step 9: Deploy compute/ceph node."
-  echo "Commands:"
-  echo "	Comming soon..."
+    echo "Usage:"
+    echo "  $0 command"
+    echo
+    echo "Available commands: (Note: work in progress)"
+    echo "help: show this message"
+    echo "	Defaults 1: Ceph and compute nodes have to have the same HW configuration."
+    echo "	Defaults 2: Nodes Prebootstrapped and turned off, waiting for WOL packet."
+    echo "	Defaults 3: Nodes are renamed, and have no spaces in names. This is URGENT!!!"
+    echo "	Defaults 4: to be added..."
+    echo "Steps:"
+    echo "	Step 1: Add info to file config/nodes_to_add"
+    echo "	Step 2: Boot up the node, with sendind magic packet(wol)."
+    echo "	Step 3: Check tha node is online"
+    echo "	Step 4: Set hostname from file"
+    echo "	Step 5: Receive id of node my the MAC".
+    echo "	Step 6: Add nodes to cluster ID."
+    echo "	Step 7: Configure node network parameters."
+    echo "	Step 8: Configure node disks parameters."
+    echo "	Step 9: Deploy compute/ceph node."
+    echo "Commands:"
+    echo "	Comming soon..."
 
 
 }
 
 function parse_options {
-  opts="$@"
-  for opt in $@; do
-    case $opt in
-      -V|--version) VERSION=$2
-                    shift 2
-                    ;;
-      -d|--debug)   DEBUG=true
-                    shift
-                    ;;
-      --nodebug)    DEBUG=false
-                    shift
-                    ;;
-      --)           shift
-                    nonopts+=("$@")
-                    return
-                    ;;
-      help|boot|deploy|start|stop|remove)
-                    nonopts+=("$@")
-                    return
-                    ;;
-      -*)           ${YELLOW}
-                    echo "Unrecognized option: $opt" 1>&2
-                    ${RESET}
-                    exit 1
-                    ;;
-      *)            nonopts+=("$opt")
-                    ;;
-    esac
-  done
+    opts="$@"
+    for opt in $@; do
+      case $opt in
+        -V|--version) VERSION=$2
+                      shift 2
+                      ;;
+        -d|--debug)   DEBUG=true
+                      shift
+                      ;;
+        --nodebug)    DEBUG=false
+                      shift
+                      ;;
+        --)           shift
+                      nonopts+=("$@")
+                      return
+                      ;;
+        help|boot|deploy|start|stop|remove)
+                      nonopts+=("$@")
+                      return
+                      ;;
+        -*)           ${YELLOW}
+                      echo "Unrecognized option: $opt" 1>&2
+                      ${RESET}
+                      exit 1
+                      ;;
+        *)            nonopts+=("$opt")
+                      ;;
+      esac
+    done
 }
 
 
 function list_nodes {
-  columnname=("ADMIN MAC" "NAME" "IP")
-  offset=0
-  for ((nodes=0;nodes<nodes_count;nodes++))
-    do
-      for((i=0;i<3;i++))
+    columnname=("ADMIN MAC" "NAME" "IP")
+    offset=0
+    for ((nodes=0;nodes<nodes_count;nodes++))
       do
+        for((i=0;i<3;i++))
+        do
           echo ${columnname[$i]} $'\x$' ${data[ (( $i + $offset )) ]}
-      done | column -t -s$'\x$'
-      (( offset += 3 ))
-    done
+        done | column -t -s$'\x$'
+        (( offset += 3 ))
+      done
 }
 
 function node_data {
 
-  re='^[1-9]+$'
-  if [[ "$1" == '' ]]; then
-    ${GREEN}
-    echo "usage: $0 info 1 2 4" >&2; 
-    ${RESET}
-    exit 0
-  fi
-  for nodes in $@; do
-    if ! [[ $nodes =~ $re ]] ; then
-      ${RED}
-      echo "error: Not a number, should be in range [1..$nodes_count]" >&2;
+    re='^[1-9]+$'
+    if [[ "$1" == '' ]]; then
+      ${GREEN}
+      echo "usage: $0 info 1 2 4" >&2; 
       ${RESET}
-      exit 1
-    elif
-      [[ $nodes > $nodes_count ]] ; then 
-      ${RED}
-      echo "ID of node number out of range [1.."$nodes_count"] please check the file node_to_add"
-      ${RESET}
-    else
-      columnname=("MAC" "NAME" "IP")
-      for((i=0;i<3;i++)) 
-       do
-         echo ${columnname[$i]} $'\x$' "${data[ (( (( $nodes - 1 )) * 3 + $i )) ]}"
-       done | column -t -s$'\x$'
+      exit 0
+    fi
+    for nodes in $@; do
+      if ! [[ $nodes =~ $re ]] ; then
+        ${RED}
+        echo "error: Not a number, should be in range [1..$nodes_count]" >&2;
+        ${RESET}
+        exit 1
+      elif
+        [[ $nodes > $nodes_count ]] ; then 
+        ${RED}
+        echo "ID of node number out of range [1.."$nodes_count"] please check the file node_to_add"
+        ${RESET}
+      else
+        columnname=("MAC" "NAME" "IP")
+        for((i=0;i<3;i++)) 
+         do
+          echo ${columnname[$i]} $'\x$' "${data[ (( (( $nodes - 1 )) * 3 + $i )) ]}"
+         done | column -t -s$'\x$'
       fi
     done
   node_count
@@ -111,7 +109,7 @@ function node_data {
 
 function wol_and_check {
 
-  re='^[1-9]+$'
+    re='^[1-9]+$'
     if [[ "$1" == '' ]]; then
       ${GREEN}
       echo "usage: $0 node 1 2 4" >&2; 
@@ -124,26 +122,25 @@ function wol_and_check {
       ${RESET}
       exit 1
     else
-
       check_rc_fuel_node            ## Check that command fuel node working well
       (( macid = (( (( $1 - 1 )) * 3 )) ))
-      #echo ${data[ $macid ]}
-      #check_active_deployments      ## Check that we have no nodes with status Deploying|provisioning and so on
+      check_active_deployments      ## Check that we have no nodes with status Deploying|provisioning and so on
       wol_node ${data[ $macid ]}    ## Sending magick packet
       check_ready node ${data[ $macid ]} ## Checking, that node Online
-      set_ext_ip ${data[ $macid ]}
       get_fuel_id ${data[ $macid ]} ## Getting the ID that fuel gave to the node
+#      set_ext_ip $1
       set_hostname $1 $node_fuel_id ## Setting hostname
-      add_to_env $node_fuel_id      
-      net_config ${data[ $macid ]}
+      add_to_env $node_fuel_id
+      net_config $node_fuel_id
+      disk_config $node_fuel_id     ## Comment this line if Compute
+      remove_from_list ${data[ $macid ]}
       deploy_changes
-      remove_from_list
      fi
 
 }
 
 function check_active_deployments {
-   n=`$FUEL nodes | egrep "deplo|disco|ready|provi" | egrep -v "ready|disco" | wc -l` ## Collecting the number of non-ready objects
+    n=`$FUEL nodes | egrep "deplo|disco|ready|provi" | egrep -v "ready|disco" | wc -l` ## Collecting the number of non-ready objects
 
     if [[ "$n" > "0" ]]; then
       ${RED}
@@ -154,7 +151,8 @@ function check_active_deployments {
 }
 
 function check_rc_fuel_node {
-rc=`fuel nodes &> /dev/null ; echo $?`
+    rc=`fuel nodes &> /dev/null ; echo $?`
+
     if [[ "$rc" > "0" ]]; then
       ${RED}
       echo "Check the fuel node command is working"; 
@@ -163,8 +161,44 @@ rc=`fuel nodes &> /dev/null ; echo $?`
     fi
 }
 
+function get_disks {
+#    DEBUG=true
+
+#    this is not used
+#    Use config for configuration disks
+
+    declare -a disks_array
+    (( macid = (( (( $1 - 1 )) * 3 )) ))
+    get_fuel_ip ${data[ $macid ]}
+    disks_array=(`ssh $node_fuel_ip cat /proc/partitions 2>/dev/null | grep -P '[svh]d[a-z](?![0-9])' | awk '{print $3" "$4}'`)
+    #debug ${disks_array[@]}
+    (( disk_count = (( ${#disks_array[@]} / 2 )) ))
+    debug "disk count:" $disk_count
+
+    update_credentials
+
+    for f in `seq 0 2 $(( ${#disks_array[@]} - 1 ))`; do
+        diskn=$(( $f + 1 ))
+        size=$(( ${disks_array[$f]} / 1024 - 565))
+        echo "#name:" ${disks_array[$diskn]} $'\x$' "size:" $size
+      if [ $f == "0" ]; then
+         echo "${disks_array[$diskn]}=os:${size},ceph:0,cephjournal:0 "
+      elif [ $f == "2" ]; then 
+         echo "${disks_array[$diskn]}=os:0,ceph:0,cephjournal:${size} "
+      else
+         echo "${disks_array[$diskn]}=os:0,ceph:${size},cephjournal:0 "
+      fi
+    done | column -t -s$'\x$'
+
+   #This function should generate disk configuration like this: sda=os:0,ceph:0,cephjournal:456780"
+
+    echo "$cmd"
+
+}
+
+
 function remove_from_list {
-  exit 0
+    sed -e 's/^$1/#$1/' -i $NTA
 }
 
 function add_to_env {
@@ -172,7 +206,7 @@ function add_to_env {
 }
 
 function deploy_changes {
-    $FUEL --env $env_id deploy-changes
+    $FUEL --env $env_id deploy-changes 2>&1 | tee /var/log/deploy-changes.log
 }
 
 function get_fuel_id {
@@ -180,31 +214,37 @@ function get_fuel_id {
     return
 }
 
+function get_fuel_ip {
+    node_fuel_ip=`$FUEL node | $GREP $1 | $AWK '{print $10}'`
+    return
+}
+
 function net_config {
-    config/manage_eth_by_roles --assign name --admin-pass $FUEL_ACCESS_password --admin-tenant admin --admin-username $FUEL_ACCESS_user --fuel $ADMIN_NETWORK_ipaddress --node $node_fuel_id --mgmt $mgmtif --public $publicif --storage $storageif --private $privateif --mgmtbondmode $mgmtbondmode --publicbondmode $publicbondmode --storagebondmode $storagebondmode --privatebondmode $privatebondmode
+    update_credentials
+    $MEBR --assign name --admin-pass $FUEL_ACCESS_password --admin-tenant admin --admin-username $FUEL_ACCESS_user --fuel $ADMIN_NETWORK_ipaddress --node $1 --mgmt $mgmtif --public $publicif --storage $storageif --private $privateif --mgmtbondmode $mgmtbondmode --publicbondmode $publicbondmode --storagebondmode $storagebondmode --privatebondmode $privatebondmode
+}
+
+function disk_config {
+    update_credentials
+    $MDBR --login $FUEL_ACCESS_user --password $FUEL_ACCESS_password --port 8000 --host=$ADMIN_NETWORK_ipaddress $1 --disk $sda $sdb $vda $vdb
 }
 
 function set_ext_ip {
-  (( ip_id = (( (( $1 - 1 )) * 3 + 2 )) ))
-echo $ip_id
-echo ${data[ip_id]}
-
-#not implemented yet
-#returns the net_id
-#NET_ID=$(sudo -u postgres psql -d nailgun -t -c "select id from network_groups where name = 'public' and group_id = 2")
-#inserts the public ip
-#sudo -u postgres psql -d nailgun -t -c "insert into ip_addrs (network,node,ip_addr) values ($NET_ID,8,'172.16.49.200');"
-
-#to check
-#sudo -u postgres psql -d nailgun -t -c "insert into ip_addrs (network,node,ip_addr) values ((select id from network_groups where name = 'public' and group_id = 2),8,'172.16.49.200');"
-exit 0
+    (( ip_id = (( (( $1 - 1 )) * 3 + 2 )) ))
+    debug "ip id $ip_id"
+    debug "ip address ${data[ ip_id ]}"
+    ext_ip=${data[ ip_id ]}
+    net_id=$(dockerctl shell postgres sudo -u postgres psql -d nailgun -t -c "select id from network_groups where name = 'public' and group_id = ${env_id}")
+    debug "Net ID $net_id"
+    dockerctl shell postgres sudo -u postgres psql -d nailgun -t -c "insert into ip_addrs (network,node,ip_addr) values (${net_id},${node_fuel_id},'${data[ip_id]}');"
 }
 
 function set_hostname {
+    (( hostname_id = (( (( $1 - 1 )) * 3 + 1 )) ))
+    host_name=${data[ $hostname_id ]}
 
-  (( hostname_id = (( (( $1 - 1 )) * 3 + 1 )) ))
-  host_name=${data[ $hostname_id ]}
-  #debug echo $host_name
+    debug "echo $host_name"
+
 
     if [[ "$1" == '' ]]; then
       ${GREEN}
@@ -217,56 +257,62 @@ function set_hostname {
 }
 
 function wol_node {
-  update_credentials
-  echo "Sending wol packet to node with mac:" $1
-  ether-wake -i ${ADMIN_NETWORK_interface} $1
+
+    update_credentials
+    echo "Sending wol packet to node with mac:" $1
+    ether-wake -i ${ADMIN_NETWORK_interface} $1
 }
 
 function node_count {
-  ${GREEN}
-  echo "Total count of spare nodes:" $nodes_count
-  ${RESET}
+    ${GREEN}
+    echo "Total count of spare nodes:" $nodes_count
+    ${RESET}
 }
 
 function check_ready {
-  #Uses a custom command to ensure a container is ready
-  update_credentials
-  failure=0
-  echo "checking that node or service is available: $1 $2"
-  case $1 in
+    #Uses a custom command to ensure a container is ready
+    update_credentials
+    failure=0
+    echo "checking that node or service is available: $1 $2"
+    case $1 in
       node) retry_checker "fuel node | grep '$2' | grep 'True'" ;;
       *) echo "No defined test for determining if $1 is ready.";;
-  esac
+    esac
 
-  if [ $failure -eq 1 ]; then
-    echo "ERROR: $1 failed to start."
-    return 1
-  else
-    echo "$1 is ready."
-    return 0
-  fi
+    if [ $failure -eq 1 ]; then
+      echo "ERROR: $1 failed to start."
+      return 1
+    else
+      echo "$1 is ready."
+      return 0
+    fi
 }
 
 function update_credentials {
-  credentialfile=$(mktemp /tmp/servicepws.XXXXX)
-  $GSC $ASTUTE_YAML > $credentialfile
-  . $credentialfile
-  rm -f $credentialfile
+    credentialfile=$(mktemp /tmp/servicepws.XXXXX)
+    $GSC $ASTUTE_YAML > $credentialfile
+    . $credentialfile
+    rm -f $credentialfile
 }
 
 function retry_checker {
-  tries=0
-  echo "checking with command \"$*\""
-  until eval $*; do
-    rc=$?
-    ((tries++))
-    echo "try number $tries"
-    echo "return code is $rc"
-    if [ $tries -gt $CHECK_RETRIES ]; then
+    tries=0
+    echo "checking with command \"$*\""
+    until eval $*; do
+      rc=$?
+      ((tries++))
+      echo "try number $tries"
+      echo "return code is $rc"
+      if [ $tries -gt $CHECK_RETRIES ]; then
       failure=1
-    break
-  fi
-    sleep 1
-  done
+      break
+    fi
+      sleep 1
+    done
 }
 
+function debug {
+  if $DEBUG; then
+    echo $@
+  fi
+}
