@@ -3,8 +3,8 @@
 
 #env configuration
 env_id=1
-#role=compute
-role=ceph-osd
+role=compute
+#role=ceph-osd
 NTA="config/nodes_to_add"
 CHECK_RETRIES=180
 
@@ -33,7 +33,6 @@ mgmtif="eth1"
 publicif="eth1"
 privateif="eth1"
 storageif="eth1"
-
 
 #disk configuration for testing
 
