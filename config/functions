@@ -34,14 +34,21 @@ function parse_options {
     opts="$@"
     for opt in $@; do
       case $opt in
-        -V|--version) VERSION=$2
-                      shift 2
-                      ;;
         -d|--debug)   DEBUG=true
                       shift
                       ;;
         --nodebug)    DEBUG=false
                       shift
+                      ;;
+        --compute)    role="compute"
+                      shift
+                      nonopts+=("$@")
+                      return
+                      ;;
+        --ceph-osd)   role="ceph-osd"
+                      shift
+                      nonopts+=("$@")
+                      return
                       ;;
         --)           shift
                       nonopts+=("$@")
@@ -78,7 +85,9 @@ function wol_and_check {
       exit 1
     else
       check_rc_fuel_node            ## Check that command fuel node working well
-      (( macid = (( (( $1 - 1 )) * 3 )) ))
+
+      (( macid = (( (( $1 - 1 )) * 7 )) ))
+
       check_active_deployments      ## Check that we have no nodes with status Deploying|provisioning and so on
       wol_node ${data[ $macid ]}    ## Sending magick packet
       check_ready node ${data[ $macid ]} ## Checking, that node Online
@@ -86,8 +95,8 @@ function wol_and_check {
 #      set_ext_ip $1
       set_hostname $1 $node_fuel_id ## Setting hostname
       add_to_env $node_fuel_id
-      net_config $node_fuel_id
-#      disk_config $node_fuel_id     ## Comment this line if Compute
+      net_config $1
+      disk_config $node_fuel_id     ## Comment this line if Compute
       remove_from_list ${data[ $macid ]}
       deploy_changes
      fi
@@ -95,15 +104,15 @@ function wol_and_check {
 }
 
 function list_nodes {
-    columnname=("ADMIN MAC" "NAME" "IP")
+    columnname=("ADMIN MAC" "NAME" "IP" "BOND0-slave1" "BOND0-slave2" "BOND1-slave1" "BOND1-slave2")
     offset=0
     for ((nodes=0;nodes<nodes_count;nodes++))
       do
-        for((i=0;i<3;i++))
+        for((i=0;i<7;i++))
         do
           echo ${columnname[$i]} $'\x$' ${data[ (( $i + $offset )) ]}
         done | column -t -s$'\x$'
-        (( offset += 3 ))
+        (( offset += 7 ))
       done
 }
 
@@ -129,9 +138,9 @@ function node_data {
         ${RESET}
       else
         columnname=("MAC" "NAME" "IP")
-        for((i=0;i<3;i++)) 
+        for((i=0;i<7;i++)) 
          do
-          echo ${columnname[$i]} $'\x$' "${data[ (( (( $nodes - 1 )) * 3 + $i )) ]}"
+          echo ${columnname[$i]} $'\x$' "${data[ (( (( $nodes - 1 )) * 7 + $i )) ]}"
          done | column -t -s$'\x$'
       fi
     done
@@ -140,7 +149,7 @@ function node_data {
 
 
 function check_active_deployments {
-    n=`$FUEL nodes | egrep "deplo|disco|ready|provi" | egrep -v "ready|disco" | wc -l` ## Collecting the number of non-ready objects
+    n=`$FUEL nodes --env $env_id | egrep "deplo|disco|ready|provi" | egrep -v "ready|disco" | wc -l` ## Collecting the number of non-ready objects
 
     if [[ "$n" > "0" ]]; then
       ${RED}
@@ -168,7 +177,7 @@ function get_disks {
 #    Use config for configuration disks
 
     declare -a disks_array
-    (( macid = (( (( $1 - 1 )) * 3 )) ))
+    (( macid = (( (( $1 - 1 )) * 7 )) ))
     get_fuel_ip ${data[ $macid ]}
     disks_array=(`ssh $node_fuel_ip cat /proc/partitions 2>/dev/null | grep -P '[svh]d[a-z](?![0-9])' | awk '{print $3" "$4}'`)
     #debug ${disks_array[@]}
@@ -200,53 +209,106 @@ function get_disks {
 function remove_from_list {
 
     sed -e 's/^'$1'/#'$1'/' -i $NTA
+
 }
 
 function add_to_env {
+
     $FUEL --env $env_id node set --node-id $1 --role $role
+
 }
 
 function deploy_changes {
+
     $FUEL --env $env_id deploy-changes 2>&1 | tee /var/log/deploy-changes.log
+
 }
 
 function get_fuel_id {
+
     node_fuel_id=`$FUEL node | $GREP $1 | $AWK '{print $1}'`
     return
+
 }
 
 function get_fuel_ip {
+
     node_fuel_ip=`$FUEL node | $GREP $1 | $AWK '{print $10}'`
     return
+
 }
 
 function net_config {
+
     update_credentials
-    $MEBR --assign name --admin-pass $FUEL_ACCESS_password --admin-tenant admin --admin-username $FUEL_ACCESS_user --fuel $ADMIN_NETWORK_ipaddress --node $1 --mgmt $mgmtif --public $publicif --storage $storageif --private $privateif --mgmtbondmode $mgmtbondmode --publicbondmode $publicbondmode --storagebondmode $storagebondmode --privatebondmode $privatebondmode
+    (( slave1 = (( (( $1 - 1 )) * 7 + 4 )) ))
+    (( slave2 = (( (( $1 - 1 )) * 7 + 5 )) ))
+    (( slave3 = (( (( $1 - 1 )) * 7 + 6 )) ))
+    (( slave4 = (( (( $1 - 1 )) * 7 + 7 )) ))
+
+#    debug ${data[$slave1]} ${data[$slave2]} ${data[$slave3]} ${data[$slave4]}
+
+    if [ "${assign}" == "mac" ]; then
+        if [ "$role" == "compute" ]; then 
+#            debug "compute network configuration"
+#            interfaces configuration for production computes
+#            mgmtif=${data[$slave2]}"+"${data[$slave4]}
+#            publicif=${data[$slave2]}"+"${data[$slave4]}
+#            privateif=${data[$slave1]}"+"${data[$slave3]}
+#            storageif=${data[$slave2]}"+"${data[$slave4]}
+#           for testing
+            mgmtif=${data[$slave1]}
+            publicif=${data[$slave1]}
+            privateif=${data[$slave1]}
+            storageif=${data[$slave1]}
+        else
+#            debug "ceph network configuration"
+#            interfaces configuration for production ceph-osd
+#            mgmtif=${data[$slave2]}"+"${data[$slave4]}
+#            publicif=${data[$slave2]}"+"${data[$slave4]}
+#            privateif=${data[$slave2]}"+"${data[$slave4]}
+#            storageif=${data[$slave1]}"+"${data[$slave3]}
+#           for testing
+            mgmtif=${data[$slave1]}
+            publicif=${data[$slave1]}
+            privateif=${data[$slave1]}
+            storageif=${data[$slave1]}
+        fi
+    fi
+
+$MEBR --assign ${assign} --admin-pass $FUEL_ACCESS_password --admin-tenant admin --admin-username $FUEL_ACCESS_user --fuel $ADMIN_NETWORK_ipaddress --node $node_fuel_id --mgmt $mgmtif --public $publicif --storage $storageif --private $privateif --mgmtbondmode $mgmtbondmode --publicbondmode $publicbondmode --storagebondmode $storagebondmode --privatebondmode $privatebondmode
+
 }
 
 function disk_config {
+
     update_credentials
-    $MDBR --login $FUEL_ACCESS_user --password $FUEL_ACCESS_password --port 8000 --host=$ADMIN_NETWORK_ipaddress $1 --disk $sda $sdb $vda $vdb
+
+    if [ "$role" == "compute" ]; then 
+       echo "Disks configurations were skipped"
+    else
+       $MDBR --login $FUEL_ACCESS_user --password $FUEL_ACCESS_password --port 8000 --host=$ADMIN_NETWORK_ipaddress $1 --disk $sda $sdb $vda $vdb
+
+    fi
 }
 
 function set_ext_ip {
-    (( ip_id = (( (( $1 - 1 )) * 3 + 2 )) ))
+
+    (( ip_id = (( (( $1 - 1 )) * 7 + 2 )) ))
     debug "ip id $ip_id"
     debug "ip address ${data[ ip_id ]}"
     ext_ip=${data[ ip_id ]}
     net_id=$(dockerctl shell postgres sudo -u postgres psql -d nailgun -t -c "select id from network_groups where name = 'public' and group_id = ${env_id}")
     debug "Net ID $net_id"
     dockerctl shell postgres sudo -u postgres psql -d nailgun -t -c "insert into ip_addrs (network,node,ip_addr) values (${net_id},${node_fuel_id},'${data[ip_id]}');"
+
 }
 
 function set_hostname {
-    (( hostname_id = (( (( $1 - 1 )) * 3 + 1 )) ))
+    (( hostname_id = (( (( $1 - 1 )) * 7 + 1 )) ))
     host_name=${data[ $hostname_id ]}
 
     debug "echo $host_name"
-
-
     if [[ "$1" == '' ]]; then
       ${GREEN}
       echo "usage: $0 node 1 2 4" >&2; 
@@ -262,15 +324,19 @@ function wol_node {
     update_credentials
     echo "Sending wol packet to node with mac:" $1
     ether-wake -i ${ADMIN_NETWORK_interface} $1
+
 }
 
 function node_count {
+
     ${GREEN}
     echo "Total count of spare nodes:" $nodes_count
     ${RESET}
+
 }
 
 function check_ready {
+
     #Uses a custom command to ensure a container is ready
     update_credentials
     failure=0
@@ -287,16 +353,20 @@ function check_ready {
       echo "$1 is ready."
       return 0
     fi
+
 }
 
 function update_credentials {
+
     credentialfile=$(mktemp /tmp/servicepws.XXXXX)
     $GSC $ASTUTE_YAML > $credentialfile
     . $credentialfile
     rm -f $credentialfile
+
 }
 
 function retry_checker {
+
     tries=0
     echo "checking with command \"$*\""
     until eval $*; do
@@ -310,10 +380,13 @@ function retry_checker {
     fi
       sleep 1
     done
+
 }
 
 function debug {
+
   if $DEBUG; then
     echo $@
   fi
+
 }

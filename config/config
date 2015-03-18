@@ -3,10 +3,10 @@
 
 #env configuration
 env_id=1
-role=compute
+#role=compute
 #role=ceph-osd
 NTA="config/nodes_to_add"
-CHECK_RETRIES=180
+CHECK_RETRIES=1800
 
 #interfaces configuration for production computes
 #adminif="eth0"
@@ -16,6 +16,8 @@ CHECK_RETRIES=180
 #storageif="eth5+eth7"
 
 #interfaces configuration for production ceph
+assign=mac
+#If assign-type mac-address, so these lines won't be used.
 #adminif="eth0"
 #mgmtif="eth5+eth7"
 #publicif="eth5+eth7"
@@ -29,10 +31,10 @@ storagebondmode="lacp-balance-tcp"
 
 
 #configuration for testing
-mgmtif="eth1"
-publicif="eth1"
-privateif="eth1"
-storageif="eth1"
+#mgmtif="eth1"
+#publicif="eth1"
+#privateif="eth1"
+#storageif="eth1"
 
 #disk configuration for testing
 
@@ -41,7 +43,7 @@ sdb="sdb=os:0,ceph:7628,cephjournal:0"
 vda="vda=os:20000,ceph:30637,cephjournal:0"
 vdb="vdb=os:0,ceph:0,cephjournal:9676"
 
-#disk configuration for producrion
+#disk configuration for producrion ceph-osd
 
 #sda="sda=os:0,ceph:0,cephjournal:456780"
 #sdb="sdb=os:0,ceph:0,cephjournal:456780"
@@ -56,7 +58,6 @@ vdb="vdb=os:0,ceph:0,cephjournal:9676"
 #sdk="sdk=os:0,ceph:3814883,cephjournal:0"
 #sdl="sdl=os:0,ceph:3814883,cephjournal:0"
 #sdm="sdm=os:0,ceph:3814883,cephjournal:0"
-
 
 #Binaries
 ASTUTE_YAML="/etc/fuel/astute.yaml"
@@ -94,4 +95,4 @@ TOEND=$(tput hpa ${COLUMNS})$(tput cub 6)
 
 declare -a data=(`cat $NTA | grep -v ^#`)
 data_count=${#data[*]}
-let "nodes_count = $data_count / 3"  #cat nodes_to_add | grep -v ^# | wc -l
+let "nodes_count = $data_count / 7"  #cat nodes_to_add | grep -v ^# | wc -l

@@ -26,15 +26,15 @@ command_seq=$COMMANDS_SEQUENCE
 if [ "$1" == "list" ]; then
   shift 1
   list_nodes
+elif [ "$1" == "disk" ]; then
+  shift 1
+  get_disks "$1"
 elif [ "$1" == "info" ]; then
   shift 1
   node_data "$@"
 elif [ "$1" == "boot" ]; then
   shift 1
   wol_and_check "$1"
-elif [ "$1" == "disk" ]; then
-  shift 1
-  get_disks "$1"
 elif [ "$1" == "update_creds" ]; then
   shift 1
   update_credentials
