@@ -1,0 +1,154 @@
+#!/usr/bin/python
+
+import argparse
+import json
+import requests
+import sys
+
+from keystoneclient.v2_0 import client as auth_client
+from six.moves.urllib import parse as urlparse
+
+INPUTS = [
+    {'name': 'node',
+     'default': None,
+     'type': int,
+     'help': 'ID of node'},
+    {'name': 'login',
+     'default': 'admin',
+     'type': str,
+     'help': 'FUEL login (default: admin).'},
+    {'name': 'password',
+     'default': 'admin',
+     'type': str,
+     'help': 'FUEL password (default: admin).'},
+    {'name': 'host',
+     'default': 'localhost',
+     'type': str,
+     'help': 'FUEL host (default: localhost).'},
+    {'name': 'port',
+     'default': '8000',
+     'type': int,
+     'help': 'FUEL port (default: 8000).'},
+    {'name': 'disk',
+     'default': [],
+     'type': str,
+     'nargs': '+',
+     'help': 'Disk options that will be passed to Fuel.\nExample:\n'
+             '    --disk name=os:10,cepch:10,cephjournal:80'},
+]
+
+
+LIST_DISKS_URL = "/nodes/%(node)s/disks"
+
+
+class FuelClient(object):
+    """This class handles API requests
+    """
+
+    def __init__(self, params):
+        self.debug = False
+        self.root = "http://%(host)s:%(port)s" % params
+
+        self.keystone_base = urlparse.urljoin(self.root, "/keystone/v2.0")
+        self.api_root = urlparse.urljoin(self.root, "/api")
+        self.user = params['login']
+        self.password = params['password']
+        self.tenant = 'admin'
+        self.initialize_keystone_client()
+        self.auth_token = self._keystone_client.auth_token
+
+    def initialize_keystone_client(self):
+        self._keystone_client = auth_client.Client(
+            username=self.user,
+            password=self.password,
+            auth_url=self.keystone_base,
+            tenant_name=self.tenant)
+        self._keystone_client.session.auth = self._keystone_client
+        self._keystone_client.authenticate()
+
+    def get(self, api):
+        url = self.api_root + api
+        headers = {'x-auth-token': self.auth_token}
+        resp = requests.get(url, headers=headers)
+        return resp.json()
+
+    def put(self, api, data):
+        url = self.api_root + api
+        data_json = json.dumps(data)
+        headers = {'content-type': 'application/json',
+                   'x-auth-token': self.auth_token}
+        resp = requests.put(url, data=data_json, headers=headers)
+        resp.raise_for_status()
+        return resp.json()
+
+
+parser = argparse.ArgumentParser(
+    description='Configuration of disks.',
+    formatter_class=argparse.RawTextHelpFormatter)
+for arg in INPUTS:
+    if arg['default'] is None:
+        parser.add_argument(arg['name'],
+                            type=arg['type'],
+                            help=arg['help'])
+    else:
+        parser.add_argument('--%s' % arg['name'],
+                            dest=arg['name'],
+                            default=arg['default'],
+                            nargs=arg.get('nargs', None),
+                            type=arg['type'],
+                            help=arg['help'])
+
+
+def parse_disk_opts(disks):
+    if not disks:
+        print "Default setting will be used."
+        sys.exit(0)
+    disks_opts = {}
+    err = False
+    supported = ['os', 'cephjournal', 'ceph']
+    for d in disks:
+        try:
+            name, values = d.split('=')
+            disk_params = dict((v.split(':')) for v in values.split(','))
+            if set(supported) & set(disk_params.keys()) != set(supported):
+                err = True
+            disks_opts[name] = disk_params
+        except ValueError:
+            err = True
+    if err:
+        print ("Wrong disk format.\nUse "
+               "`name=os:N,ceph:N,cephjournal:N`.")
+        sys.exit(1)
+    return disks_opts
+
+
+if __name__ == '__main__':
+    params = vars(parser.parse_args())
+    disk_opts = parse_disk_opts(params['disk'])
+
+    client = FuelClient(params)
+    _disks = client.get(LIST_DISKS_URL % params)
+    disks = dict((d['name'], d) for d in _disks)
+
+    changed_disks = set(disk_opts.keys()) & set(disks.keys())
+    if not changed_disks:
+        print 'Default setting will be used.'
+        sys.exit(0)
+
+    changed_set = []
+    for k in changed_disks:
+        disk = {
+            u'extra': disks[k]['extra'],
+            u'id': disks[k]['id'],
+            u'name': k,
+            u'size': int(disks[k]['size']),
+            u'volumes': [{u'name': u'os',
+                          u'size': int(disk_opts[k]['os'])},
+                         {u'name': u'cephjournal',
+                          u'size': int(disk_opts[k]['cephjournal'])},
+                         {u'name': u'ceph',
+                          u'size': int(disk_opts[k]['ceph'])}]}
+
+        changed_set.append(disk)
+    result = client.put(LIST_DISKS_URL % params, changed_set)
+    print "Disks %s were updated." % str(changed_disks)

@@ -45,7 +45,7 @@ function parse_options {
                       nonopts+=("$@")
                       return
                       ;;
-        --ceph-osd)   role="ceph-osd"
+        --ceph)       role="ceph-osd"
                       shift
                       nonopts+=("$@")
                       return
@@ -85,14 +85,14 @@ function wol_and_check {
       exit 1
     else
       check_rc_fuel_node            ## Check that command fuel node working well
-
+      check_nodes_count
       (( macid = (( (( $1 - 1 )) * 7 )) ))
 
       check_active_deployments      ## Check that we have no nodes with status Deploying|provisioning and so on
       wol_node ${data[ $macid ]}    ## Sending magick packet
       check_ready node ${data[ $macid ]} ## Checking, that node Online
       get_fuel_id ${data[ $macid ]} ## Getting the ID that fuel gave to the node
-#      set_ext_ip $1
+      set_ext_ip $1
       set_hostname $1 $node_fuel_id ## Setting hostname
       add_to_env $node_fuel_id
       net_config $1
@@ -137,7 +137,7 @@ function node_data {
         echo "ID of node number out of range [1.."$nodes_count"] please check the file node_to_add"
         ${RESET}
       else
-        columnname=("MAC" "NAME" "IP")
+        columnname=("MAC" "NAME" "IP" "BOND0-Slave1" "BOND0-Slave2" "BOND1-Slave1" "BOND0-Slave2")
         for((i=0;i<7;i++)) 
          do
           echo ${columnname[$i]} $'\x$' "${data[ (( (( $nodes - 1 )) * 7 + $i )) ]}"
@@ -293,14 +293,20 @@ function disk_config {
 }
 
 function set_ext_ip {
-
     (( ip_id = (( (( $1 - 1 )) * 7 + 2 )) ))
     debug "ip id $ip_id"
     debug "ip address ${data[ ip_id ]}"
     ext_ip=${data[ ip_id ]}
+
+if [ "$role" == "compute" ]; then 
     net_id=$(dockerctl shell postgres sudo -u postgres psql -d nailgun -t -c "select id from network_groups where name = 'public' and group_id = ${env_id}")
     debug "Net ID $net_id"
     dockerctl shell postgres sudo -u postgres psql -d nailgun -t -c "insert into ip_addrs (network,node,ip_addr) values (${net_id},${node_fuel_id},'${data[ip_id]}');"
+else
+    net_id=$(dockerctl shell postgres sudo -u postgres psql -d nailgun -t -c "select id from network_groups where name = 'storage' and group_id = ${env_id}")
+    debug "Net ID $net_id"
+    dockerctl shell postgres sudo -u postgres psql -d nailgun -t -c "insert into ip_addrs (network,node,ip_addr) values (${net_id},${node_fuel_id},'${data[ip_id]}');"
+fi
 
 }
 
@@ -324,6 +330,17 @@ function wol_node {
     update_credentials
     echo "Sending wol packet to node with mac:" $1
     ether-wake -i ${ADMIN_NETWORK_interface} $1
+
+}
+
+function check_nodes_count {
+
+    if [ $nodes_count -lt "1" ] ; then 
+        ${RED}
+        echo "There is no spare nodes!"
+        ${RESET}
+        exit 1
+    fi
 
 }
 

@@ -3,12 +3,20 @@
 
 #env configuration
 env_id=1
+
+#Roles now can be defined as an option: ./project.sh --compute boot 1
 #role=compute
 #role=ceph-osd
-NTA="config/nodes_to_add"
+
+if [ "$role" == "compute" ]; then 
+   NTA="config/computes_to_add"
+else 
+   NTA="config/cephs_to_add"
+fi
+
 CHECK_RETRIES=1800
 
-#interfaces configuration for production computes
+#interfaces configuration for production computes if assign=name
 #adminif="eth0"
 #mgmtif="eth5+eth7"
 #publicif="eth5+eth7"
@@ -16,8 +24,10 @@ CHECK_RETRIES=1800
 #storageif="eth5+eth7"
 
 #interfaces configuration for production ceph
+
 assign=mac
-#If assign-type mac-address, so these lines won't be used.
+
+#If assign-type mac-address, so these lines won't be used
 #adminif="eth0"
 #mgmtif="eth5+eth7"
 #publicif="eth5+eth7"
@@ -28,7 +38,6 @@ mgmtbondmode="lacp-balance-tcp"
 publicbondmode="lacp-balance-tcp"
 privatebondmode="lacp-balance-tcp"
 storagebondmode="lacp-balance-tcp"
-
 
 #configuration for testing
 #mgmtif="eth1"
