@@ -2,5 +2,5 @@
 ## no comments/spaces/returns allowed after this line
 ## Use small letters to write mac-address
 ##| admin_mac     |hostname      | stor-ip     | bond0-s1        | bond0-s2        | bond1-s1        | bond1-s2
-#52:54:00:2e:63:58 comp-autoscale 172.16.49.151 52:54:00:ad:09:ce 52:54:00:ab:49:4b 52:54:00:ad:09:ce 52:54:00:ab:49:4b
-#52:54:00:2e:63:58 ceph-autoscale 172.16.49.151 52:54:00:ad:09:ce 52:54:00:ab:49:4b 52:54:00:ad:09:ce 52:54:00:ab:49:4b
+52:54:00:2e:63:58 ceph-autoscale 172.16.49.151 52:54:00:ad:09:ce 52:54:00:ab:49:4b 52:54:00:ad:09:ce 52:54:00:ab:49:4b
+52:54:00:2e:63:58 ceph-autoscal2 172.16.49.151 52:54:00:ad:09:ce 52:54:00:ab:49:4b 52:54:00:ad:09:ce 52:54:00:ab:49:4b

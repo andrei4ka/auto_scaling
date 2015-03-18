@@ -1,32 +1,27 @@
 #!/bin/bash
 
-#if ${DEBUG}; then
-#  set -xe
-#fi
-
 function show_usage {
     echo "Usage:"
     echo "  $0 command"
     echo
     echo "Available commands: (Note: work in progress)"
     echo "help: show this message"
-    echo "	Defaults 1: Ceph and compute nodes have to have the same HW configuration."
-    echo "	Defaults 2: Nodes Prebootstrapped and turned off, waiting for WOL packet."
-    echo "	Defaults 3: Nodes are renamed, and have no spaces in names. This is URGENT!!!"
-    echo "	Defaults 4: to be added..."
-    echo "Steps:"
-    echo "	Step 1: Add info to file config/nodes_to_add"
-    echo "	Step 2: Boot up the node, with sendind magic packet(wol)."
-    echo "	Step 3: Check tha node is online"
-    echo "	Step 4: Set hostname from file"
-    echo "	Step 5: Receive id of node my the MAC".
-    echo "	Step 6: Add nodes to cluster ID."
-    echo "	Step 7: Configure node network parameters."
-    echo "	Step 8: Configure node disks parameters."
-    echo "	Step 9: Deploy compute/ceph node."
-    echo "Commands:"
-    echo "	Comming soon..."
-
+    echo "Options:"
+    ${GREEN}
+    echo "  *--compute : Use compute environment"
+    echo "  *--ceph    : Use ceph environment"
+    echo "  * -- Required parameter"
+    echo "  --debug    : to show some debug messages"
+    ${RESET}
+    echo "Commands  :"
+    echo "  list: List spare nodes in compute/ceph environment"
+    echo "  info: Info about corrsponding node in compute/ceph list"
+    echo "  boot: to boot up node"
+    echo
+    echo "Examples:"
+    echo "  $0 --compute list   : Lists all compute nodes from config/computes_to_add"
+    echo "  $0 --ceph info 2    : Info about second node from the file config/cephs_to_add"
+    echo "  $0 --compute boot 1 : Boot first compute from the file config/computes_to_add"
 
 }
 
