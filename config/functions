@@ -81,7 +81,7 @@ function wol_and_check {
     else
       check_rc_fuel_node            ## Check that command fuel node working well
       check_nodes_count
-      (( macid = (( (( $1 - 1 )) * 7 )) ))
+      (( macid = (( (( $1 - 1 )) * 8 )) ))
 
       check_active_deployments      ## Check that we have no nodes with status Deploying|provisioning and so on
       wol_node ${data[ $macid ]}    ## Sending magick packet
@@ -99,15 +99,15 @@ function wol_and_check {
 }
 
 function list_nodes {
-    columnname=("ADMIN MAC" "NAME" "IP" "BOND0-slave1" "BOND0-slave2" "BOND1-slave1" "BOND1-slave2")
+    columnname=("ADMIN MAC" "NAME" "IP" "BOND0-slave1" "BOND0-slave2" "BOND1-slave1" "BOND1-slave2" "RACK-ID")
     offset=0
     for ((nodes=0;nodes<nodes_count;nodes++))
       do
-        for((i=0;i<7;i++))
+        for((i=0;i<8;i++))
         do
           echo ${columnname[$i]} $'\x$' ${data[ (( $i + $offset )) ]}
         done | column -t -s$'\x$'
-        (( offset += 7 ))
+        (( offset += 8 ))
       done
 }
 
@@ -132,10 +132,10 @@ function node_data {
         echo "ID of node number out of range [1.."$nodes_count"] please check the file node_to_add"
         ${RESET}
       else
-        columnname=("MAC" "NAME" "IP" "BOND0-Slave1" "BOND0-Slave2" "BOND1-Slave1" "BOND0-Slave2")
-        for((i=0;i<7;i++)) 
+        columnname=("MAC" "NAME" "IP" "BOND0-Slave1" "BOND0-Slave2" "BOND1-Slave1" "BOND0-Slave2" "RACK-ID")
+        for((i=0;i<8;i++)) 
          do
-          echo ${columnname[$i]} $'\x$' "${data[ (( (( $nodes - 1 )) * 7 + $i )) ]}"
+          echo ${columnname[$i]} $'\x$' "${data[ (( (( $nodes - 1 )) * 8 + $i )) ]}"
          done | column -t -s$'\x$'
       fi
     done
@@ -172,7 +172,7 @@ function get_disks {
 #    Use config for configuration disks
 
     declare -a disks_array
-    (( macid = (( (( $1 - 1 )) * 7 )) ))
+    (( macid = (( (( $1 - 1 )) * 8 )) ))
     get_fuel_ip ${data[ $macid ]}
     disks_array=(`ssh $node_fuel_ip cat /proc/partitions 2>/dev/null | grep -P '[svh]d[a-z](?![0-9])' | awk '{print $3" "$4}'`)
     #debug ${disks_array[@]}
@@ -236,10 +236,10 @@ function get_fuel_ip {
 function net_config {
 
     update_credentials
-    (( slave1 = (( (( $1 - 1 )) * 7 + 4 )) ))
-    (( slave2 = (( (( $1 - 1 )) * 7 + 5 )) ))
-    (( slave3 = (( (( $1 - 1 )) * 7 + 6 )) ))
-    (( slave4 = (( (( $1 - 1 )) * 7 + 7 )) ))
+    (( slave1 = (( (( $1 - 1 )) * 8 + 4 )) ))
+    (( slave2 = (( (( $1 - 1 )) * 8 + 5 )) ))
+    (( slave3 = (( (( $1 - 1 )) * 8 + 6 )) ))
+    (( slave4 = (( (( $1 - 1 )) * 8 + 7 )) ))
 
 #    debug ${data[$slave1]} ${data[$slave2]} ${data[$slave3]} ${data[$slave4]}
 
@@ -288,7 +288,7 @@ function disk_config {
 }
 
 function set_ext_ip {
-    (( ip_id = (( (( $1 - 1 )) * 7 + 2 )) ))
+    (( ip_id = (( (( $1 - 1 )) * 8 + 2 )) ))
     debug "ip id $ip_id"
     debug "ip address ${data[ ip_id ]}"
     ext_ip=${data[ ip_id ]}
@@ -306,7 +306,7 @@ fi
 }
 
 function set_hostname {
-    (( hostname_id = (( (( $1 - 1 )) * 7 + 1 )) ))
+    (( hostname_id = (( (( $1 - 1 )) * 8 + 1 )) ))
     host_name=${data[ $hostname_id ]}
 
     debug "echo $host_name"
