@@ -7,12 +7,7 @@ env_id=1
 #Roles now can be defined as an option: ./project.sh --compute boot 1
 #role=compute
 #role=ceph-osd
-
-if [ "$role" == "compute" ]; then 
-   NTA="config/computes_to_add"
-else 
-   NTA="config/cephs_to_add"
-fi
+NTA="config/cephs_to_add"
 
 CHECK_RETRIES=1800
 

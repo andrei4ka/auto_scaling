@@ -36,11 +36,13 @@ function parse_options {
                       shift
                       ;;
         --compute)    role="compute"
+                      NTA="config/computes_to_add"
                       shift
                       nonopts+=("$@")
                       return
                       ;;
         --ceph)       role="ceph-osd"
+                      NTA="config/cephs_to_add"
                       shift
                       nonopts+=("$@")
                       return
@@ -65,7 +67,6 @@ function parse_options {
 }
 
 function wol_and_check {
-
     re='^[1-9]+$'
     if [[ "$1" == '' ]]; then
       ${GREEN}
@@ -82,6 +83,7 @@ function wol_and_check {
       check_rc_fuel_node            ## Check that command fuel node working well
       check_nodes_count
       (( macid = (( (( $1 - 1 )) * 8 )) ))
+      (( hostname_id = (( (( $1 - 1 )) * 8 + 1 )) ))
 
       check_active_deployments      ## Check that we have no nodes with status Deploying|provisioning and so on
       wol_node ${data[ $macid ]}    ## Sending magick packet
@@ -94,6 +96,8 @@ function wol_and_check {
       disk_config $node_fuel_id     ## Comment this line if Compute
       remove_from_list ${data[ $macid ]}
       deploy_changes
+      check_ready deployed ${data[ $hostname_id ]}
+      ceph_change_rack $1
      fi
 
 }
@@ -165,6 +169,17 @@ function check_rc_fuel_node {
     fi
 }
 
+function ceph_change_rack {
+
+    if [ "$role" == "compute" ]; then
+        debug skipping the rack change for compute
+    else
+        (( rackid = (( (( $1 - 1 )) * 8 + 8 )) ))
+        (( hostname_id = (( (( $1 - 1 )) * 8 + 1 )) ))
+        ssh -o StrictHostKeyChecking=no ${data[ $hostname_id ]} osd crush move ${data[ $hostname_id ]} rack=${data[ $rackid ]}
+    fi
+}
+
 function get_disks {
 #    DEBUG=true
 
@@ -172,7 +187,6 @@ function get_disks {
 #    Use config for configuration disks
 
     declare -a disks_array
-    (( macid = (( (( $1 - 1 )) * 8 )) ))
     get_fuel_ip ${data[ $macid ]}
     disks_array=(`ssh $node_fuel_ip cat /proc/partitions 2>/dev/null | grep -P '[svh]d[a-z](?![0-9])' | awk '{print $3" "$4}'`)
     #debug ${disks_array[@]}
@@ -215,8 +229,11 @@ function add_to_env {
 
 function deploy_changes {
 
-    $FUEL --env $env_id deploy-changes 2>&1 | tee /var/log/deploy-changes.log
-
+    if [ `rpm -qa | grep screen | wc -l` == "0" ]; then
+      yum install -y screen && screen -dmS deploy_changes $FUEL --env $env_id deploy-changes
+    else
+      screen -dmS deploy_changes $FUEL --env $env_id deploy-changes
+    fi
 }
 
 function get_fuel_id {
@@ -264,10 +281,10 @@ function net_config {
 #            privateif=${data[$slave2]}"+"${data[$slave4]}
 #            storageif=${data[$slave1]}"+"${data[$slave3]}
 #           for testing
-            mgmtif=${data[$slave1]}
-            publicif=${data[$slave1]}
-            privateif=${data[$slave1]}
-            storageif=${data[$slave1]}
+            mgmtif=${data[$slave2]}
+            publicif=${data[$slave2]}
+            privateif=${data[$slave2]}
+            storageif=${data[$slave2]}
         fi
     fi
 
@@ -355,6 +372,7 @@ function check_ready {
     echo "checking that node or service is available: $1 $2"
     case $1 in
       node) retry_checker "fuel node | grep '$2' | grep 'True'" ;;
+      deployed) retry_checker "fuel nodes | grep '$2' | grep ready" ;;
       *) echo "No defined test for determining if $1 is ready.";;
     esac
 
