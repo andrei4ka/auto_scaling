@@ -1,0 +1,102 @@
+#!/bin/bash
+#Configuration section
+
+#env configuration
+env_id=1
+
+#Roles now can be defined as an option: ./project.sh --compute boot 1
+role=compute
+#role=ceph-osd
+NTA="config/computes_to_add"
+
+CHECK_RETRIES=1800
+
+#interfaces configuration for production computes if assign=name
+#adminif="eth0"
+#mgmtif="eth5+eth7"
+#publicif="eth5+eth7"
+#privateif="eth4+eth6"
+#storageif="eth5+eth7"
+
+#interfaces configuration for production ceph
+
+assign=mac
+
+#If assign-type mac-address, so these lines won't be used
+#adminif="eth0"
+#mgmtif="eth5+eth7"
+#publicif="eth5+eth7"
+#privateif="eth5+eth7"
+#storageif="eth4+eth6"
+
+mgmtbondmode="lacp-balance-tcp"
+publicbondmode="lacp-balance-tcp"
+privatebondmode="lacp-balance-tcp"
+storagebondmode="lacp-balance-tcp"
+
+#configuration for testing
+#mgmtif="eth1"
+#publicif="eth1"
+#privateif="eth1"
+#storageif="eth1"
+
+#disk configuration for testing
+
+sda="sda=os:0,ceph:7628,cephjournal:0"
+sdb="sdb=os:0,ceph:7628,cephjournal:0"
+vda="vda=os:20000,ceph:30637,cephjournal:0"
+vdb="vdb=os:0,ceph:0,cephjournal:9676"
+
+#disk configuration for producrion ceph-osd
+
+#sda="sda=os:0,ceph:0,cephjournal:456780"
+#sdb="sdb=os:0,ceph:0,cephjournal:456780"
+#sdc="sdc=os:952780,ceph:0,cephjournal:0"
+#sdd="sdd=os:0,ceph:3814883,cephjournal:0"
+#sde="sde=os:0,ceph:3814883,cephjournal:0"
+#sdf="sdf=os:0,ceph:3814883,cephjournal:0"
+#sdg="sdg=os:0,ceph:3814883,cephjournal:0"
+#sdh="sdh=os:0,ceph:3814883,cephjournal:0"
+#sdi="sdi=os:0,ceph:3814883,cephjournal:0"
+#sdj="sdj=os:0,ceph:3814883,cephjournal:0"
+#sdk="sdk=os:0,ceph:3814883,cephjournal:0"
+#sdl="sdl=os:0,ceph:3814883,cephjournal:0"
+#sdm="sdm=os:0,ceph:3814883,cephjournal:0"
+
+#Binaries
+ASTUTE_YAML="/etc/fuel/astute.yaml"
+JQ="config/jq"
+MEBR="config/manage_eth_by_roles"
+MDBR="config/manage_disk_by_roles"
+GSC="$PYT /usr/bin/get_service_credentials.py"
+GIT="/usr/bin/git"
+SSH="/usr/bin/ssh"
+SCP="/usr/bin/scp"
+PYT="/usr/bin/python"
+YUM="/usr/bin/yum -y"
+RM="/bin/rm -rf"
+MV="/bin/mv"
+SCR="/usr/bin/screen"
+MAKE="/usr/bin/make"
+AWK="/usr/bin/awk"
+GREP="/bin/grep"
+HEAD="/usr/bin/head"
+MKDIR="/bin/mkdir -p"
+CP="/bin/cp -R"
+SCTL="/usr/bin/supervisorctl"
+FUEL="/usr/bin/fuel"
+KILLALL="/usr/bin/killall"
+CURL="/usr/bin/curl"
+
+#Colors an appearence
+RED="echo -en \\033[1;31m"
+GREEN="echo -en \\033[1;32m"
+RESET="echo -en \\033[0;39m"
+YELLOW="echo -en \\e[0;93m"
+BOLD=$(tput bold)
+export COLUMNS=$(tput cols)
+TOEND=$(tput hpa ${COLUMNS})$(tput cub 6)
+
+declare -a data=(`cat $NTA | grep -v ^#`)
+data_count=${#data[*]}
+let "nodes_count = $data_count / 8"  #cat nodes_to_add | grep -v ^# | wc -l

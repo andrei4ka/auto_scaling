@@ -1,7 +1,7 @@
 #!/bin/bash
 
 confdir="config"
-. "$confdir/config"
+. "$confdir/config_ceph"
 . "$confdir/functions"
 
 DEBUG=false

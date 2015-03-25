@@ -6,7 +6,7 @@ env_id=1
 
 #Roles now can be defined as an option: ./project.sh --compute boot 1
 #role=compute
-#role=ceph-osd
+role=ceph-osd
 NTA="config/cephs_to_add"
 
 CHECK_RETRIES=1800
@@ -42,26 +42,26 @@ storagebondmode="lacp-balance-tcp"
 
 #disk configuration for testing
 
-sda="sda=os:0,ceph:7628,cephjournal:0"
-sdb="sdb=os:0,ceph:7628,cephjournal:0"
-vda="vda=os:20000,ceph:30637,cephjournal:0"
-vdb="vdb=os:0,ceph:0,cephjournal:9676"
+#sda="sda=os:0,ceph:7628,cephjournal:0"
+#sdb="sdb=os:0,ceph:7628,cephjournal:0"
+#vda="vda=os:20000,ceph:30637,cephjournal:0"
+#vdb="vdb=os:0,ceph:0,cephjournal:9676"
 
 #disk configuration for producrion ceph-osd
 
-#sda="sda=os:0,ceph:0,cephjournal:456780"
-#sdb="sdb=os:0,ceph:0,cephjournal:456780"
-#sdc="sdc=os:952780,ceph:0,cephjournal:0"
-#sdd="sdd=os:0,ceph:3814883,cephjournal:0"
-#sde="sde=os:0,ceph:3814883,cephjournal:0"
-#sdf="sdf=os:0,ceph:3814883,cephjournal:0"
-#sdg="sdg=os:0,ceph:3814883,cephjournal:0"
-#sdh="sdh=os:0,ceph:3814883,cephjournal:0"
-#sdi="sdi=os:0,ceph:3814883,cephjournal:0"
-#sdj="sdj=os:0,ceph:3814883,cephjournal:0"
-#sdk="sdk=os:0,ceph:3814883,cephjournal:0"
-#sdl="sdl=os:0,ceph:3814883,cephjournal:0"
-#sdm="sdm=os:0,ceph:3814883,cephjournal:0"
+sda="sda=os:0,ceph:0,cephjournal:456780"
+sdb="sdb=os:0,ceph:0,cephjournal:456780"
+sdc="sdc=os:952780,ceph:0,cephjournal:0"
+sdd="sdd=os:0,ceph:3814883,cephjournal:0"
+sde="sde=os:0,ceph:3814883,cephjournal:0"
+sdf="sdf=os:0,ceph:3814883,cephjournal:0"
+sdg="sdg=os:0,ceph:3814883,cephjournal:0"
+sdh="sdh=os:0,ceph:3814883,cephjournal:0"
+sdi="sdi=os:0,ceph:3814883,cephjournal:0"
+sdj="sdj=os:0,ceph:3814883,cephjournal:0"
+sdk="sdk=os:0,ceph:3814883,cephjournal:0"
+sdl="sdl=os:0,ceph:3814883,cephjournal:0"
+sdm="sdm=os:0,ceph:3814883,cephjournal:0"
 
 #Binaries
 ASTUTE_YAML="/etc/fuel/astute.yaml"
