@@ -341,7 +341,7 @@ function wol_node {
 
     update_credentials
     echo "Sending wol packet to node with mac:" $1
-    ether-wake -i ${ADMIN_NETWORK_interface} $1
+    ether-wake -b -i ${ADMIN_NETWORK_interface} $1
 
 }
 
