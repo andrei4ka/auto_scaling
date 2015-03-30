@@ -174,9 +174,9 @@ function ceph_change_rack {
     if [ "$role" == "compute" ]; then
         debug skipping the rack change for compute
     else
-        (( rackid = (( (( $1 - 1 )) * 8 + 8 )) ))
+        (( rackid = (( (( $1 - 1 )) * 8 + 7 )) ))
         (( hostname_id = (( (( $1 - 1 )) * 8 + 1 )) ))
-        ssh -o StrictHostKeyChecking=no ${data[ $hostname_id ]} osd crush move ${data[ $hostname_id ]} rack=${data[ $rackid ]}
+        ceph osd crush move ${data[ $hostname_id ]} rack=${data[ $rackid ]}
     fi
 }
 
@@ -299,7 +299,7 @@ function disk_config {
     if [ "$role" == "compute" ]; then 
        echo "Disks configurations were skipped"
     else
-       $MDBR --login $FUEL_ACCESS_user --password $FUEL_ACCESS_password --port 8000 --host=$ADMIN_NETWORK_ipaddress $1 --disk $sda $sdb $vda $vdb
+       $MDBR --login $FUEL_ACCESS_user --password $FUEL_ACCESS_password --port 8000 --host=$ADMIN_NETWORK_ipaddress $1 --disk $sda $sdb $sdc $sdd $sde $sdf $sdg $sdh $sdi $sdj $sdk $sdl $sdm
 
     fi
 }
