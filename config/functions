@@ -264,27 +264,27 @@ function net_config {
         if [ "$role" == "compute" ]; then 
 #            debug "compute network configuration"
 #            interfaces configuration for production computes
-#            mgmtif=${data[$slave2]}"+"${data[$slave4]}
-#            publicif=${data[$slave2]}"+"${data[$slave4]}
-#            privateif=${data[$slave1]}"+"${data[$slave3]}
-#            storageif=${data[$slave2]}"+"${data[$slave4]}
+            mgmtif=${data[$slave2]}"+"${data[$slave4]}
+            publicif=${data[$slave2]}"+"${data[$slave4]}
+            privateif=${data[$slave1]}"+"${data[$slave3]}
+            storageif=${data[$slave2]}"+"${data[$slave4]}
 #           for testing
-            mgmtif=${data[$slave1]}
-            publicif=${data[$slave1]}
-            privateif=${data[$slave1]}
-            storageif=${data[$slave1]}
+#            mgmtif=${data[$slave1]}
+#            publicif=${data[$slave1]}
+#            privateif=${data[$slave1]}
+#            storageif=${data[$slave1]}
         else
 #            debug "ceph network configuration"
 #            interfaces configuration for production ceph-osd
-#            mgmtif=${data[$slave2]}"+"${data[$slave4]}
-#            publicif=${data[$slave2]}"+"${data[$slave4]}
-#            privateif=${data[$slave2]}"+"${data[$slave4]}
-#            storageif=${data[$slave1]}"+"${data[$slave3]}
+            mgmtif=${data[$slave2]}"+"${data[$slave4]}
+            publicif=${data[$slave2]}"+"${data[$slave4]}
+            privateif=${data[$slave2]}"+"${data[$slave4]}
+            storageif=${data[$slave1]}"+"${data[$slave3]}
 #           for testing
-            mgmtif=${data[$slave2]}
-            publicif=${data[$slave2]}
-            privateif=${data[$slave2]}
-            storageif=${data[$slave2]}
+#            mgmtif=${data[$slave2]}
+#            publicif=${data[$slave2]}
+#            privateif=${data[$slave2]}
+#            storageif=${data[$slave2]}
         fi
     fi
 
