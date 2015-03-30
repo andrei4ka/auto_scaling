@@ -172,7 +172,7 @@ function ceph_change_rack {
     if [ "$role" == "compute" ]; then
         debug skipping the rack change for compute
     else
-        (( rackid = (( (( $1 - 1 )) * 8 + 8 )) ))
+        (( rackid = (( (( $1 - 1 )) * 8 + 7 )) ))
         (( hostname_id = (( (( $1 - 1 )) * 8 + 1 )) ))
         ceph osd crush move ${data[ $hostname_id ]} rack=${data[ $rackid ]}
     fi
@@ -262,27 +262,27 @@ function net_config {
         if [ "$role" == "compute" ]; then 
 #            debug "compute network configuration"
 #            interfaces configuration for production computes
-#            mgmtif=${data[$slave2]}"+"${data[$slave4]}
-#            publicif=${data[$slave2]}"+"${data[$slave4]}
-#            privateif=${data[$slave1]}"+"${data[$slave3]}
-#            storageif=${data[$slave2]}"+"${data[$slave4]}
+            mgmtif=${data[$slave2]}"+"${data[$slave4]}
+            publicif=${data[$slave2]}"+"${data[$slave4]}
+            privateif=${data[$slave1]}"+"${data[$slave3]}
+            storageif=${data[$slave2]}"+"${data[$slave4]}
 #           for testing
-            mgmtif=${data[$slave1]}
-            publicif=${data[$slave1]}
-            privateif=${data[$slave1]}
-            storageif=${data[$slave1]}
+#            mgmtif=${data[$slave1]}
+#            publicif=${data[$slave1]}
+#            privateif=${data[$slave1]}
+#            storageif=${data[$slave1]}
         else
 #            debug "ceph network configuration"
 #            interfaces configuration for production ceph-osd
-#            mgmtif=${data[$slave2]}"+"${data[$slave4]}
-#            publicif=${data[$slave2]}"+"${data[$slave4]}
-#            privateif=${data[$slave2]}"+"${data[$slave4]}
-#            storageif=${data[$slave1]}"+"${data[$slave3]}
+            mgmtif=${data[$slave2]}"+"${data[$slave4]}
+            publicif=${data[$slave2]}"+"${data[$slave4]}
+            privateif=${data[$slave2]}"+"${data[$slave4]}
+            storageif=${data[$slave1]}"+"${data[$slave3]}
 #           for testing
-            mgmtif=${data[$slave2]}
-            publicif=${data[$slave2]}
-            privateif=${data[$slave2]}
-            storageif=${data[$slave2]}
+#            mgmtif=${data[$slave2]}
+#            publicif=${data[$slave2]}
+#            privateif=${data[$slave2]}
+#            storageif=${data[$slave2]}
         fi
     fi
 
@@ -297,7 +297,7 @@ function disk_config {
     if [ "$role" == "compute" ]; then 
        echo "Disks configurations were skipped"
     else
-       $MDBR --login $FUEL_ACCESS_user --password $FUEL_ACCESS_password --port 8000 --host=$ADMIN_NETWORK_ipaddress $1 --disk $sda $sdb $vda $vdb
+       $MDBR --login $FUEL_ACCESS_user --password $FUEL_ACCESS_password --port 8000 --host=$ADMIN_NETWORK_ipaddress $1 --disk $sda $sdb $sdc $sdd $sde $sdf $sdg $sdh $sdi $sdj $sdk $sdl $sdm
 
     fi
 }
@@ -339,7 +339,7 @@ function wol_node {
 
     update_credentials
     echo "Sending wol packet to node with mac:" $1
-    ether-wake -i ${ADMIN_NETWORK_interface} $1
+    ether-wake -b -i ${ADMIN_NETWORK_interface} $1
 
 }
 
