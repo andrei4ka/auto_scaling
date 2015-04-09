@@ -315,7 +315,7 @@ if [ "$role" == "compute" ]; then
     storagenet_id=$(dockerctl shell postgres sudo -u postgres psql -d nailgun -t -c "select id from network_groups where name = 'storage' and group_id = ${env_id}")
     debug "Net ID $net_id"
 #    dockerctl shell postgres sudo -u postgres psql -d nailgun -t -c "insert into ip_addrs (network,node,ip_addr) values (${net_id},${node_fuel_id},'${data[ip_id]}');"
-    dockerctl shell postgres sudo -u postgres psql -n nailgun -t -c "insert into ip_addrs (network,node,ip_addr) select ${net_id},${node_fuel_id},'${data[storageip_id]}' where not exists ( select id from ip_addrs where node=${node_fuel_id} and network=${storagenet_id});" >/dev/null 2>&1;
+    dockerctl shell postgres sudo -u postgres psql -n nailgun -t -c "insert into ip_addrs (network,node,ip_addr) select ${storagenet_id},${node_fuel_id},'${data[storageip_id]}' where not exists ( select id from ip_addrs where node=${node_fuel_id} and network=${storagenet_id});" >/dev/null 2>&1;
      dockerctl shell postgres sudo -u postgres psql -n nailgun -t -c "insert into ip_addrs (network,node,ip_addr) select ${net_id},${node_fuel_id},'${data[ip_id]}' where not exists ( select id from ip_addrs where node=${node_fuel_id} and network=${net_id});" >/dev/null 2>&1;
 else
     net_id=$(dockerctl shell postgres sudo -u postgres psql -d nailgun -t -c "select id from network_groups where name = 'storage' and group_id = ${env_id}")
