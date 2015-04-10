@@ -345,8 +345,9 @@ function wol_node {
 
     update_credentials
     echo "Sending wol packet to node with mac:" $1
-    sudo /sbin/ether-wake -b -i ${ADMIN_NETWORK_interface} $1
-
+    for i in {1..10}; do
+      /sbin/ether-wake -b -i ${ADMIN_NETWORK_interface} ${1};
+    done
 }
 
 function check_nodes_count {
