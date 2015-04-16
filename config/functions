@@ -95,6 +95,7 @@ function wol_and_check {
       remove_from_list ${data[ $macid ]}
       deploy_changes
       check_ready deployed ${data[ $hostname_id ]}
+      ceph_set_weight
       ceph_change_rack $1
      fi
 
@@ -164,6 +165,20 @@ function check_rc_fuel_node {
       echo "Check the fuel node command is working"; 
       ${RESET}
       exit 1
+    fi
+}
+
+function ceph_set_weight {
+
+    if [ "$role" == "compute" ]; then
+        debug skipping osd weight change for compute
+    else
+      for i in $( ceph osd tree|awk -v host="${data[ $hostname_id ]}" \
+                  'BEGIN{f=0}{if ((f) && ($3 ~ "osd.")){print $3} if \
+                  ($3 == "host"){if ($4 == host){f=1} else{f=0}}}' );
+        do 
+           ceph osd crush reweight $i 0.0;
+      done
     fi
 }
 
